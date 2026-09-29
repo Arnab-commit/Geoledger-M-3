@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — Land Record Command Centre</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link active">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Top Institutional Command Bar -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">Operational Overview Desk</div>
+                        <div class="header-subtitle">Real-Time Cadastral Intelligence, Verification Triage & Contradiction Feed</div>
+                    </div>
+                </div>
+
+                <!-- Global Record Index Search (ULPIN, Khasra, Owner, Deed) -->
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <span id="last-update" class="text-xs text-muted" style="font-family: var(--font-mono);"></span>
+                    <button onclick="loadDashboardData()" class="btn btn-sm btn-secondary">↻ Sync Ledger</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Cadastral Workflow Progression Strip -->
+                <div class="command-workflow-strip">
+                    <div class="command-strip-header">
+                        <div class="command-strip-title">
+                            <span>OPERATIONAL PIPELINE TRANSITION</span>
+                        </div>
+                        <span class="badge badge-info" style="font-size: 0.62rem;">Full-Lifecycle Land Record Modernization</span>
+                    </div>
+                    <div class="command-workflow-steps">
+                        <a href="documents.html" class="command-step-node">
+                            <span class="command-step-idx">01</span>
+                            <span>Deed Intake</span>
+                        </a>
+                        <a href="documents.html" class="command-step-node">
+                            <span class="command-step-idx">02</span>
+                            <span>Multilingual OCR</span>
+                        </a>
+                        <a href="comparison.html" class="command-step-node">
+                            <span class="command-step-idx">03</span>
+                            <span>Cross-Deed Diff</span>
+                        </a>
+                        <a href="parcel.html" class="command-step-node">
+                            <span class="command-step-idx">04</span>
+                            <span>Digital Twin</span>
+                        </a>
+                        <a href="parcel.html?tab=discrepancies" class="command-step-node">
+                            <span class="command-step-idx">05</span>
+                            <span>Discrepancy</span>
+                        </a>
+                        <a href="gis.html" class="command-step-node">
+                            <span class="command-step-idx">06</span>
+                            <span>UTM Cadastral</span>
+                        </a>
+                        <a href="verification.html" class="command-step-node">
+                            <span class="command-step-idx">07</span>
+                            <span>Officer Review</span>
+                        </a>
+                        <a href="audit.html" class="command-step-node">
+                            <span class="command-step-idx">08</span>
+                            <span>SHA-256 Audit</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Operational Overview Metric Rail (High-Density Tabular Cells) -->
+                <div class="operational-stats-bar">
+                    <div class="stat-cell cadastral">
+                        <div class="stat-cell-header">
+                            <span class="stat-cell-label">Ingested Deeds</span>
+                            <span class="badge badge-secondary" style="font-size: 0.6rem;">REPOSITORY</span>
+                        </div>
+                        <div class="stat-cell-value num-tabular" id="stat-docs">—</div>
+                        <div class="stat-cell-sub" id="stat-docs-parcels">— Parcels Resolved</div>
+                    </div>
+
+                    <div class="stat-cell review">
+                        <div class="stat-cell-header">
+                            <span class="stat-cell-label">Adjudication Queue</span>
+                            <span class="badge badge-warning" style="font-size: 0.6rem;">AWAITING REVIEW</span>
+                        </div>
+                        <div class="stat-cell-value num-tabular" id="stat-pending">—</div>
+                        <div class="stat-cell-sub">Pending Revenue Officer Sign-Off</div>
+                    </div>
+
+                    <div class="stat-cell conflict">
+                        <div class="stat-cell-header">
+                            <span class="stat-cell-label">Discrepancies</span>
+                            <span class="badge badge-danger" style="font-size: 0.6rem;">ALERT</span>
+                        </div>
+                        <div class="stat-cell-value num-tabular" id="stat-discrepancies">—</div>
+                        <div class="stat-cell-sub" id="stat-high-risk">— High-Severity Flags</div>
+                    </div>
+
+                    <div class="stat-cell verified">
+                        <div class="stat-cell-header">
+                            <span class="stat-cell-label">Verified Cases</span>
+                            <span class="badge badge-success" style="font-size: 0.6rem;">CERTIFIED</span>
+                        </div>
+                        <div class="stat-cell-value num-tabular" id="stat-verified">—</div>
+                        <div class="stat-cell-sub">Cases signed off by authorized reviewers</div>
+                    </div>
+                </div>
+
+                <!-- Operational Triage Layout: "What Needs Attention Right Now?" -->
+                <div class="grid grid-2 gap-md">
+                    <!-- Left: Immediate Adjudication Queue -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>High-Priority Verification Queue</span>
+                            <a href="verification.html" class="btn btn-sm btn-secondary">Open Adjudication Desk →</a>
+                        </div>
+                        <div class="table-container">
+                            <table id="high-risk-table">
+                                <thead>
+                                    <tr>
+                                        <th>Case Reference</th>
+                                        <th>Priority</th>
+                                        <th>Adjudication State</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted p-md">Loading priority cases...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right: Cadastral Digital Twin Stream -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>Active Parcel Digital Twins</span>
+                            <a href="parcel.html" class="btn btn-sm btn-secondary">Registry Directory →</a>
+                        </div>
+                        <div class="table-container">
+                            <table id="recent-parcels-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parcel Identifier</th>
+                                        <th>Location & Jurisdiction</th>
+                                        <th>Certification</th>
+                                        <th>Inspect</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted p-md">Loading resolved parcels...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engine Telemetry & Processing Quality Ledger -->
+                <div class="card mt-md" style="background: var(--canvas-panel); border-left: 3px solid var(--survey-cadastral);">
+                    <div class="card-header" style="padding-bottom: 0.35rem; margin-bottom: 0.5rem;">
+                        <span style="font-family: var(--font-mono); font-size: 0.76rem; text-transform: uppercase; color: var(--ink-secondary);">
+                            Engine Calibration & Multi-Modal Processing Telemetry
+                        </span>
+                        <span class="badge badge-success">Online • Verified</span>
+                    </div>
+                    <div class="grid grid-4 gap-md text-sm">
+                        <div style="background: #FFFFFF; padding: 10px 12px; border: 1px solid var(--canvas-border); border-radius: 2px;">
+                            <div class="text-xs text-muted" style="font-family: var(--font-mono);">OCR RECOGNITION QUALITY</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--survey-cadastral); margin-top: 2px;" id="avg-ocr-conf" class="num-tabular">—</div>
+                            <div class="text-xs text-muted">Across 15 Indic languages</div>
+                        </div>
+                        <div style="background: #FFFFFF; padding: 10px 12px; border: 1px solid var(--canvas-border); border-radius: 2px;">
+                            <div class="text-xs text-muted" style="font-family: var(--font-mono);">FIELD EXTRACTION RATE</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--state-verified); margin-top: 2px;" id="avg-extract-conf" class="num-tabular">—</div>
+                            <div class="text-xs text-muted">23 Normalized Cadastral Fields</div>
+                        </div>
+                        <div style="background: #FFFFFF; padding: 10px 12px; border: 1px solid var(--canvas-border); border-radius: 2px;">
+                            <div class="text-xs text-muted" style="font-family: var(--font-mono);">AVERAGE LATENCY</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--ink-deep); margin-top: 2px;" id="avg-processing-time" class="num-tabular">—</div>
+                            <div class="text-xs text-muted">Pre-processing, OCR & Resolution</div>
+                        </div>
+                        <div style="background: #FFFFFF; padding: 10px 12px; border: 1px solid var(--canvas-border); border-radius: 2px;">
+                            <div class="text-xs text-muted" style="font-family: var(--font-mono);">SPATIAL PROJECTION</div>
+                            <div style="font-size: 1.05rem; font-weight: 700; color: var(--ink-deep); margin-top: 6px; font-family: var(--font-mono);">UTM 42N – 47N</div>
+                            <div class="text-xs text-muted">PyProj Dynamic Geodetic Area</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        async function loadDashboardData() {
+            try {
+                // Load statistics
+                const stats = await api('/api/audit/stats');
+                if (stats) {
+                    document.getElementById('stat-docs').textContent = stats.documents_count || 0;
+                    document.getElementById('stat-docs-parcels').textContent = `${stats.parcels_count || 0} Parcels Resolved`;
+                    document.getElementById('stat-pending').textContent = stats.pending_verifications || 0;
+                    document.getElementById('stat-discrepancies').textContent = stats.total_discrepancies || 0;
+                    document.getElementById('stat-high-risk').textContent = `${stats.high_risk_discrepancies || 0} High-Severity Flags`;
+                    document.getElementById('stat-verified').textContent = stats.verified_records || 0;
+                    document.getElementById('avg-ocr-conf').textContent = `${stats.avg_ocr_confidence}%`;
+                    document.getElementById('avg-extract-conf').textContent = `${stats.avg_extraction_confidence}%`;
+                    document.getElementById('avg-processing-time').textContent = stats.avg_processing_time || '1.8s';
+                }
+
+                // Load recent parcels
+                const parcels = await api('/api/parcels?limit=5');
+                if (parcels && parcels.length > 0) {
+                    const tbody = document.querySelector('#recent-parcels-table tbody');
+                    tbody.innerHTML = parcels.map(p => `
+                        <tr>
+                            <td>
+                                <a href="parcel.html?id=${p.id}" class="record-ident link">${p.parcel_code}</a>
+                                ${p.ulpin ? `<div class="text-xs text-muted" style="font-family: var(--font-mono);">ULPIN: ${p.ulpin}</div>` : ''}
+                            </td>
+                            <td>
+                                <div>${p.village}, ${p.district}</div>
+                                <div class="text-xs text-muted">${p.state || 'India'}</div>
+                            </td>
+                            <td>${getStatusBadge(p.verification_status)}</td>
+                            <td>
+                                <a href="parcel.html?id=${p.id}" class="btn btn-sm btn-secondary">Inspect Twin</a>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    document.querySelector('#recent-parcels-table tbody').innerHTML = '<tr><td colspan="4" class="text-center text-muted p-md">No parcels yet. Ingest documents to resolve parcel twin.</td></tr>';
+                }
+
+                // Load high-priority cases
+                const cases = await api('/api/verification/cases?priority=high&status=pending&limit=5');
+                if (cases && cases.length > 0) {
+                    const tbody = document.querySelector('#high-risk-table tbody');
+                    tbody.innerHTML = cases.map(c => `
+                        <tr>
+                            <td>
+                                <strong style="color: var(--ink-deep);">${(c.case_type || 'Mutation Review').replace(/_/g, ' ')}</strong>
+                                <div class="text-xs text-muted" style="font-family: var(--font-mono);">#${c.id.substring(0, 8)}</div>
+                            </td>
+                            <td><span class="badge badge-danger">${c.priority.toUpperCase()}</span></td>
+                            <td>${getStatusBadge(c.status)}</td>
+                            <td>
+                                <a href="verification.html?id=${c.id}" class="btn btn-sm btn-primary">Review Evidence</a>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    document.querySelector('#high-risk-table tbody').innerHTML = '<tr><td colspan="4" class="text-center text-muted p-md">No high-priority cases pending review in queue</td></tr>';
+                }
+
+                document.getElementById('last-update').textContent = `Ledger Sync: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showToast('Failed to load dashboard data: ' + error.message, 'error');
+            }
+        }
+
+        loadDashboardData();
+        setInterval(loadDashboardData, 25000);
+    </script>
+</body>
+</html>

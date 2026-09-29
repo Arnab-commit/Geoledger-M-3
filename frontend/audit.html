@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — Immutable Audit Log & Compliance Ledger</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link active">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">System Audit Trail & Compliance Ledger</div>
+                        <div class="header-subtitle">Immutable Cryptographic Audit Logging for Non-Repudiation, Legal Adjudication & Accountability</div>
+                    </div>
+                </div>
+
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <button onclick="exportAuditJSON()" class="btn btn-secondary btn-sm">📥 Export Ledger (JSON)</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Filters Toolbar -->
+                <div class="card mb-md" style="padding: 0.75rem 1rem;">
+                    <div class="grid grid-4 gap-md">
+                        <div>
+                            <label class="label">Target Entity Classification</label>
+                            <select id="filter-entity-type" class="input" onchange="loadAuditLogs()">
+                                <option value="">All Entities</option>
+                                <option value="document">Cadastral Document</option>
+                                <option value="parcel">Parcel Digital Twin</option>
+                                <option value="verification">Verification Case</option>
+                                <option value="user">User / Access Session</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label">Action Keyword Filter</label>
+                            <input type="text" id="filter-action" class="input" placeholder="e.g. PROCESSED, VERIFIED, UPLOAD" onkeyup="if(event.key === 'Enter') loadAuditLogs()">
+                        </div>
+                        <div>
+                            <label class="label">Officer / Principal Filter</label>
+                            <input type="text" id="filter-user" class="input" placeholder="User ID / Name..." onkeyup="if(event.key === 'Enter') loadAuditLogs()">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button onclick="loadAuditLogs()" class="btn btn-primary" style="width: 100%;">Filter Audit Ledger</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Log Ledger Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>Immutable Cryptographic Event Ledger</span>
+                        <span id="audit-count" class="badge badge-info">0 events recorded</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Audit Timestamp</th>
+                                    <th>Officer / Principal</th>
+                                    <th>Action Executed</th>
+                                    <th>Target Entity</th>
+                                    <th>Operation Evidentiary Details</th>
+                                    <th>Host / Origin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted p-md">Loading immutable audit stream...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-muted font-mono" id="pagination-info">Showing events</span>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="loadPreviousPage()" id="prev-btn" class="btn btn-sm btn-secondary" disabled>← Previous Page</button>
+                                <button onclick="loadNextPage()" id="next-btn" class="btn btn-sm btn-secondary">Next Page →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        let currentOffset = 0;
+        const pageSize = 50;
+        let totalLogs = 0;
+        let currentLogsData = [];
+
+        async function loadAuditLogs() {
+            try {
+                const entityType = document.getElementById('filter-entity-type').value;
+                const action = document.getElementById('filter-action').value.trim();
+                const userId = document.getElementById('filter-user').value.trim();
+
+                const params = new URLSearchParams();
+                if (entityType) params.append('entity_type', entityType);
+                if (action) params.append('action', action);
+                if (userId) params.append('user_id', userId);
+                params.append('limit', pageSize);
+                params.append('offset', currentOffset);
+
+                const response = await api(`/api/audit/logs?${params.toString()}`);
+                totalLogs = response.total || 0;
+                currentLogsData = response.logs || [];
+
+                const tbody = document.querySelector('#audit-table tbody');
+                if (currentLogsData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-md">No audit events match the specified filter criteria</td></tr>';
+                    document.getElementById('audit-count').textContent = '0 events';
+                    return;
+                }
+
+                tbody.innerHTML = currentLogsData.map(log => {
+                    const timestamp = formatDate(log.created_at);
+                    const actionBadge = log.action.includes('ERROR') || log.action.includes('FAIL') ? 'badge-danger' :
+                                        log.action.includes('VERIF') || log.action.includes('APPROV') ? 'badge-success' : 'badge-info';
+                    return `
+                        <tr>
+                            <td><span style="font-family: var(--font-mono); font-size: 0.74rem;">${timestamp}</span></td>
+                            <td><span class="badge badge-secondary">${log.user_name || 'System / Automated'}</span></td>
+                            <td><span class="badge ${actionBadge}">${log.action}</span></td>
+                            <td><strong style="color: var(--ink-deep);">${log.entity_type || 'system'}</strong> ${log.entity_id ? `<code class="text-xs tabular-code">${log.entity_id.substring(0, 8)}</code>` : ''}</td>
+                            <td class="text-xs" style="color: var(--ink-secondary); max-width: 380px; line-height: 1.4;">${log.details || '—'}</td>
+                            <td><code class="text-xs font-mono">${log.ip_address || 'Not recorded'}</code></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('audit-count').textContent = `${totalLogs} total events`;
+                document.getElementById('pagination-info').textContent = `Showing ${currentOffset + 1} to ${Math.min(currentOffset + pageSize, totalLogs)} of ${totalLogs} events`;
+
+                document.getElementById('prev-btn').disabled = currentOffset === 0;
+                document.getElementById('next-btn').disabled = currentOffset + pageSize >= totalLogs;
+
+            } catch (error) {
+                console.error('Failed to load audit logs:', error);
+                showToast('Failed to load audit logs: ' + error.message, 'error');
+            }
+        }
+
+        function loadPreviousPage() {
+            if (currentOffset >= pageSize) {
+                currentOffset -= pageSize;
+                loadAuditLogs();
+            }
+        }
+
+        function loadNextPage() {
+            if (currentOffset + pageSize < totalLogs) {
+                currentOffset += pageSize;
+                loadAuditLogs();
+            }
+        }
+
+        function exportAuditJSON() {
+            if (currentLogsData.length === 0) {
+                showToast('No logs available to export', 'warning');
+                return;
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentLogsData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `geoledger_compliance_audit_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Audit log exported successfully!', 'success');
+        }
+
+        loadAuditLogs();
+    </script>
+</body>
+</html>

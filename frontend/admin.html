@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — System Administration & User Governance</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .role-chip-admin { background: rgba(176, 39, 29, 0.1); color: var(--state-conflict); border: 1px solid var(--state-conflict-border); }
+        .role-chip-officer { background: rgba(29, 75, 102, 0.1); color: var(--survey-cadastral); border: 1px solid rgba(29, 75, 102, 0.3); }
+        .role-chip-citizen { background: var(--canvas-subtle); color: var(--ink-secondary); border: 1px solid var(--canvas-border); }
+        .role-chip-auditor { background: rgba(153, 91, 6, 0.1); color: var(--state-review); border: 1px solid var(--state-review-border); }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+                <a href="admin.html" class="nav-link active" id="nav-admin-link">
+                    <span>User & Role Governance</span>
+                    <span class="nav-link-code">ADM</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">System Administration & Access Governance</div>
+                        <div class="header-subtitle">Statutory Role Assignment, Geographic Jurisdiction Allocation & Enterprise RBAC Enforcement</div>
+                    </div>
+                </div>
+
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <button onclick="openCreateUserModal()" class="btn btn-primary btn-sm">+ Provision Identity</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Navigation Tabs -->
+                <div class="tabs mb-md">
+                    <button class="tab-btn active" id="tab-btn-users" onclick="switchAdminTab('users')">👥 User Directory (<span id="user-count">0</span>)</button>
+                    <button class="tab-btn" id="tab-btn-jurisdictions" onclick="switchAdminTab('jurisdictions')">🗺️ Geographic Jurisdictions</button>
+                    <button class="tab-btn" id="tab-btn-roles" onclick="switchAdminTab('roles')">🔐 RBAC Permission Matrix</button>
+                </div>
+
+                <!-- Tab 1: User Directory & Role Governance -->
+                <div id="admin-view-users" class="tab-content active">
+                    <div class="card mb-md" style="padding: 0.75rem 1rem;">
+                        <div class="grid grid-3 gap-md">
+                            <div>
+                                <label class="label">Filter By Institutional Role</label>
+                                <select id="filter-user-role" class="input" onchange="loadUsers()">
+                                    <option value="">All Roles</option>
+                                    <option value="citizen">Citizen / Applicant</option>
+                                    <option value="revenue_officer">Revenue Officer</option>
+                                    <option value="verifier">Verification Officer</option>
+                                    <option value="admin">Administrator</option>
+                                    <option value="auditor">Auditor</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Filter By Status</label>
+                                <select id="filter-user-status" class="input" onchange="loadUsers()">
+                                    <option value="">All Statuses</option>
+                                    <option value="true">Active Only</option>
+                                    <option value="false">Deactivated Only</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button onclick="loadUsers()" class="btn btn-secondary" style="width: 100%;">↻ Refresh Directory</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>Authoritative Directory of Identities</span>
+                            <span id="user-total-badge" class="badge badge-info">Loading...</span>
+                        </div>
+                        <div class="table-container">
+                            <table id="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>Principal / Username</th>
+                                        <th>Full Legal Name & Email</th>
+                                        <th>Canonical Role</th>
+                                        <th>Assigned Jurisdiction</th>
+                                        <th>Operational State</th>
+                                        <th>Registered Date</th>
+                                        <th>Governance Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted p-md">Loading user directory...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Geographic Jurisdictions -->
+                <div id="admin-view-jurisdictions" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <span>Revenue Hierarchy & Cadastral Circles</span>
+                            <button onclick="loadJurisdictions()" class="btn btn-sm btn-secondary">↻ Sync</button>
+                        </div>
+                        <div class="table-container">
+                            <table id="jurisdictions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Jurisdiction Code</th>
+                                        <th>Administrative Division</th>
+                                        <th>District</th>
+                                        <th>Tehsil / Taluk</th>
+                                        <th>Block / Circle</th>
+                                        <th>Hierarchy Scope</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted p-md">Loading jurisdictions...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: RBAC Permission Matrix -->
+                <div id="admin-view-roles" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <span>Statutory RBAC Privilege & Authority Matrix</span>
+                            <span class="badge badge-success">Cryptographically Audited</span>
+                        </div>
+                        <div class="p-md" id="roles-matrix-container">
+                            <div class="text-center text-muted p-md">Loading RBAC matrix...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Change Role -->
+    <div id="role-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>Statutory Role Re-Assignment</h3>
+                <button onclick="closeRoleModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-sm">
+                    <span class="text-muted text-xs font-mono">TARGET IDENTITY:</span>
+                    <div id="role-modal-username" class="font-bold" style="font-size: 1rem; color: var(--ink-deep);">—</div>
+                </div>
+                <div class="mb-md">
+                    <label class="label">New Official Role</label>
+                    <select id="new-role-select" class="input">
+                        <option value="citizen">CITIZEN (Applicant / Landowner Self-Service)</option>
+                        <option value="revenue_officer">REVENUE_OFFICER (Cadastral Adjudicator)</option>
+                        <option value="verifier">VERIFIER (Standard Verification Officer)</option>
+                        <option value="auditor">AUDITOR (Statutory Read-Only Observer)</option>
+                        <option value="admin">ADMIN (State Administration & Governance)</option>
+                    </select>
+                </div>
+                <div class="mb-md">
+                    <label class="label">Mandatory Administrative Reason & Gazette Reference</label>
+                    <textarea id="role-reason" class="input" rows="3" placeholder="Provide departmental justification, appointment order reference, or transfer dispatch number..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeRoleModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="submitRoleChange()" class="btn btn-primary">Authorize Role Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Provision User -->
+    <div id="create-user-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>Provision Institutional Identity</h3>
+                <button onclick="closeCreateUserModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="grid grid-2 gap-md mb-sm">
+                    <div>
+                        <label class="label">Username</label>
+                        <input type="text" id="new-user-username" class="input" placeholder="e.g. officer_roy">
+                    </div>
+                    <div>
+                        <label class="label">Official Email</label>
+                        <input type="email" id="new-user-email" class="input" placeholder="e.g. roy@revenue.wb.gov.in">
+                    </div>
+                </div>
+                <div class="grid grid-2 gap-md mb-sm">
+                    <div>
+                        <label class="label">Full Legal Name</label>
+                        <input type="text" id="new-user-fullname" class="input" placeholder="e.g. Subhankar Roy">
+                    </div>
+                    <div>
+                        <label class="label">Initial Temporary Password</label>
+                        <input type="password" id="new-user-password" class="input" placeholder="Min 6 characters">
+                    </div>
+                </div>
+                <div class="mb-sm">
+                    <label class="label">Assigned Institutional Role</label>
+                    <select id="new-user-role" class="input">
+                        <option value="citizen">CITIZEN (Applicant)</option>
+                        <option value="revenue_officer" selected>REVENUE_OFFICER (Field Adjudicator)</option>
+                        <option value="verifier">VERIFIER (Verification Queue Officer)</option>
+                        <option value="auditor">AUDITOR (Statutory Audit)</option>
+                        <option value="admin">ADMIN (Administrator)</option>
+                    </select>
+                </div>
+                <div class="mb-sm">
+                    <label class="label">Primary Geographic Jurisdiction</label>
+                    <select id="new-user-jurisdiction" class="input">
+                        <option value="">Unassigned / Global Scope</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeCreateUserModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="submitCreateUser()" class="btn btn-primary">Provision Identity</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        const currentUser = Auth.getUser();
+        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
+            showToast('Access Denied: System Administration is strictly restricted to Administrators.', 'error');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+        }
+
+        let allUsers = [];
+        let allJurisdictions = [];
+        let activeEditUserId = null;
+
+        function switchAdminTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+            document.getElementById(`tab-btn-${tabKey}`).classList.add('active');
+            document.getElementById(`admin-view-${tabKey}`).style.display = 'block';
+
+            if (tabKey === 'jurisdictions') loadJurisdictions();
+            if (tabKey === 'roles') loadRoleMatrix();
+        }
+
+        async function loadUsers() {
+            try {
+                const role = document.getElementById('filter-user-role').value;
+                const status = document.getElementById('filter-user-status').value;
+                const params = new URLSearchParams();
+                if (role) params.append('role', role);
+                if (status) params.append('is_active', status);
+
+                const res = await api(`/api/admin/users?${params.toString()}`);
+                allUsers = res.users || [];
+
+                document.getElementById('user-count').textContent = allUsers.length;
+                document.getElementById('user-total-badge').textContent = `${allUsers.length} Active Records`;
+
+                const tbody = document.querySelector('#users-table tbody');
+                if (allUsers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-md">No identities match filter criteria</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = allUsers.map(u => {
+                    const roleClass = u.role === 'admin' || u.role === 'super_admin' ? 'role-chip-admin' :
+                                      u.role === 'revenue_officer' || u.role === 'verifier' ? 'role-chip-officer' :
+                                      u.role === 'auditor' ? 'role-chip-auditor' : 'role-chip-citizen';
+
+                    const jurText = u.jurisdictions && u.jurisdictions.length > 0 ?
+                        u.jurisdictions.map(j => `${j.district || ''} / ${j.tehsil || j.name}`).join('; ') :
+                        (u.jurisdiction_scope === 'GLOBAL' ? '<span class="badge badge-secondary">GLOBAL</span>' : 'Unallocated');
+
+                    const statusBadge = u.is_active ?
+                        '<span class="badge badge-success">ACTIVE</span>' :
+                        '<span class="badge badge-danger">DEACTIVATED</span>';
+
+                    return `
+                        <tr>
+                            <td>
+                                <strong style="color: var(--ink-deep);">${u.username}</strong>
+                                <div class="text-xs text-muted font-mono">ID: ${u.id.substring(0, 8)}...</div>
+                            </td>
+                            <td>
+                                <div>${u.full_name}</div>
+                                <div class="text-xs text-muted font-mono">${u.email}</div>
+                            </td>
+                            <td>
+                                <span class="stat-badge ${roleClass}">${u.role.toUpperCase()}</span>
+                            </td>
+                            <td class="text-xs" style="color: var(--ink-secondary); max-width: 200px;">
+                                ${jurText}
+                            </td>
+                            <td>${statusBadge}</td>
+                            <td><span class="font-mono text-xs">${formatDate(u.created_at)}</span></td>
+                            <td>
+                                <div style="display: flex; gap: 4px;">
+                                    <button onclick="openRoleModal('${u.id}', '${u.username}', '${u.role}')" class="btn btn-sm btn-secondary" style="font-size: 0.68rem; padding: 2px 6px;">
+                                        Change Role
+                                    </button>
+                                    <button onclick="toggleUserStatus('${u.id}', ${!u.is_active})" class="btn btn-sm btn-${u.is_active ? 'danger' : 'success'}" style="font-size: 0.68rem; padding: 2px 6px;">
+                                        ${u.is_active ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Failed to load users:', err);
+                showToast('Failed to load user directory: ' + err.message, 'error');
+            }
+        }
+
+        async function loadJurisdictions() {
+            try {
+                const res = await api('/api/admin/jurisdictions');
+                allJurisdictions = res.jurisdictions || [];
+
+                const tbody = document.querySelector('#jurisdictions-table tbody');
+                if (allJurisdictions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-md">No jurisdictions registered</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = allJurisdictions.map(j => `
+                    <tr>
+                        <td><code class="font-mono font-bold">${j.code}</code></td>
+                        <td><strong>${j.name}</strong></td>
+                        <td>${j.district || 'All Districts (*)'}</td>
+                        <td>${j.tehsil || 'All Tehsils (*)'}</td>
+                        <td>${j.village || 'All Villages (*)'}</td>
+                        <td><span class="badge badge-info">${j.state || 'India'}</span></td>
+                    </tr>
+                `).join('');
+
+                // Populate jurisdiction selector in create modal
+                const sel = document.getElementById('new-user-jurisdiction');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Unassigned / Global Scope</option>' +
+                        allJurisdictions.map(j => `<option value="${j.id}">${j.name} (${j.district || 'Any'} / ${j.tehsil || 'Any'})</option>`).join('');
+                }
+
+            } catch (err) {
+                console.error('Failed to load jurisdictions:', err);
+                showToast('Failed to load jurisdictions: ' + err.message, 'error');
+            }
+        }
+
+        async function loadRoleMatrix() {
+            try {
+                const res = await api('/api/admin/roles');
+                const roles = res.roles || [];
+                const container = document.getElementById('roles-matrix-container');
+
+                container.innerHTML = `
+                    <div class="grid grid-2 gap-md">
+                        ${roles.map(r => `
+                            <div class="card" style="border-top: 3px solid var(--survey-cadastral); background: var(--canvas-surface);">
+                                <div class="card-header">
+                                    <strong>${r.role.toUpperCase()}</strong>
+                                    <span class="badge badge-info">${r.total_permissions} Permissions</span>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 10px;">
+                                    ${r.permissions.map(p => `
+                                        <code class="text-xs" style="background: var(--canvas-panel); border: 1px solid var(--canvas-border); padding: 2px 6px; border-radius: 2px; font-family: var(--font-mono);">${p}</code>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error('Failed to load role matrix:', err);
+            }
+        }
+
+        function openRoleModal(userId, username, currentRole) {
+            activeEditUserId = userId;
+            document.getElementById('role-modal-username').textContent = `${username} (Current: ${currentRole.toUpperCase()})`;
+            document.getElementById('new-role-select').value = currentRole;
+            document.getElementById('role-reason').value = '';
+            document.getElementById('role-modal').style.display = 'flex';
+        }
+
+        function closeRoleModal() {
+            document.getElementById('role-modal').style.display = 'none';
+            activeEditUserId = null;
+        }
+
+        async function submitRoleChange() {
+            if (!activeEditUserId) return;
+            const newRole = document.getElementById('new-role-select').value;
+            const reason = document.getElementById('role-reason').value.trim();
+
+            if (!reason) {
+                showToast('A mandatory legal/administrative reason is required for role modification', 'warning');
+                return;
+            }
+
+            try {
+                showToast('Updating role and recording cryptographic audit entry...', 'info');
+                await api(`/api/admin/users/${activeEditUserId}/role`, {
+                    method: 'PUT',
+                    body: { role: newRole, reason: reason }
+                });
+                showToast('Role updated successfully and recorded in immutable ledger', 'success');
+                closeRoleModal();
+                loadUsers();
+            } catch (err) {
+                console.error('Failed to change role:', err);
+                showToast('Role change failed: ' + err.message, 'error');
+            }
+        }
+
+        async function toggleUserStatus(userId, activate) {
+            const reason = prompt(`Please enter statutory reason for ${activate ? 'activating' : 'deactivating'} this identity:`);
+            if (!reason) return;
+
+            try {
+                await api(`/api/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    body: { is_active: activate, reason: reason }
+                });
+                showToast(`User ${activate ? 'activated' : 'deactivated'} successfully`, 'success');
+                loadUsers();
+            } catch (err) {
+                console.error('Failed to update status:', err);
+                showToast('Status update failed: ' + err.message, 'error');
+            }
+        }
+
+        function openCreateUserModal() {
+            loadJurisdictions();
+            document.getElementById('create-user-modal').style.display = 'flex';
+        }
+
+        function closeCreateUserModal() {
+            document.getElementById('create-user-modal').style.display = 'none';
+        }
+
+        async function submitCreateUser() {
+            const username = document.getElementById('new-user-username').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const full_name = document.getElementById('new-user-fullname').value.trim();
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+            const jurisdiction_id = document.getElementById('new-user-jurisdiction').value || null;
+
+            if (!username || !email || !password || !full_name) {
+                showToast('Please fill all required user fields', 'warning');
+                return;
+            }
+
+            try {
+                showToast('Provisioning institutional identity...', 'info');
+                await api('/api/admin/users', {
+                    method: 'POST',
+                    body: {
+                        username,
+                        email,
+                        password,
+                        full_name,
+                        role,
+                        jurisdiction_id
+                    }
+                });
+                showToast(`Principal ${username} provisioned successfully!`, 'success');
+                closeCreateUserModal();
+                loadUsers();
+            } catch (err) {
+                console.error('Failed to create user:', err);
+                showToast('User provisioning failed: ' + err.message, 'error');
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

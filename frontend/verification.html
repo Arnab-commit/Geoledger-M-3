@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — Revenue Officer Adjudication Center</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .active-case-card {
+            border-left: 4px solid var(--survey-cadastral) !important;
+            background: #FFFFFF !important;
+            box-shadow: var(--shadow-sm);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link active">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">Revenue Officer Adjudication Center</div>
+                        <div class="header-subtitle">Human-in-the-Loop Verification, Non-Destructive Ground Truth & Evidentiary Sign-Off</div>
+                    </div>
+                </div>
+
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <span class="badge badge-info" style="font-size: 0.65rem;">Active Adjudication Desk</span>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content">
+                <div class="grid grid-3 gap-md">
+                    <!-- Left Column: Verification Queue -->
+                    <div class="card" style="grid-column: span 1; height: calc(100vh - 128px); display: flex; flex-direction: column;">
+                        <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.35rem;">
+                            <span>Adjudication Queue</span>
+                            <button onclick="loadCases()" class="btn btn-sm btn-secondary">↻ Sync</button>
+                        </div>
+                        <div class="mb-sm">
+                            <select id="case-status-filter" class="input" style="padding: 4px 8px; font-size: 0.78rem;" onchange="loadCases()">
+                                <option value="">All Review States</option>
+                                <option value="pending" selected>Pending Adjudication</option>
+                                <option value="in_review">Under Active Review</option>
+                                <option value="verified">Certified / Approved</option>
+                                <option value="corrected">Corrected Ground Truth</option>
+                                <option value="rejected">Rejected / Disputed</option>
+                            </select>
+                        </div>
+                        <div id="cases-list" class="list-container" style="flex: 1; overflow-y: auto;">
+                            <div class="text-center text-muted p-md">Loading queue cases...</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Case Details & Adjudication Workspace -->
+                    <div class="card" style="grid-column: span 2; height: calc(100vh - 128px); display: flex; flex-direction: column; overflow-y: auto;">
+                        <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.35rem;">
+                            <span id="detail-header-title">Select a Case from the Adjudication Queue</span>
+                            <span id="detail-status-badge" class="badge" style="display: none;">—</span>
+                        </div>
+                        <div id="case-detail-content" style="flex: 1; overflow-y: auto; padding: 0.25rem;">
+                            <div class="text-center text-muted p-xl" style="background: var(--canvas-surface);">
+                                <div style="font-size: 2.5rem; color: var(--survey-cadastral);">🛡️</div>
+                                <h4 class="serif-heading mt-sm" style="font-size: 1.15rem;">Revenue Officer Evidence Review Desk</h4>
+                                <p class="text-xs text-muted mt-xs" style="max-width: 500px; margin: 0.5rem auto 0; line-height: 1.5;">
+                                    Select any pending case from the left docket to inspect evidentiary deed passages, evaluate detected boundary contradictions, and record non-destructive canonical ground truth.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        let currentCaseId = null;
+        let casesData = [];
+
+        async function loadCases() {
+            try {
+                const status = document.getElementById('case-status-filter').value;
+                const params = new URLSearchParams();
+                if (status) params.append('status', status);
+
+                const cases = await api(`/api/verification/cases?${params.toString()}`);
+                casesData = cases || [];
+
+                const container = document.getElementById('cases-list');
+                if (casesData.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted p-md">No cases found matching filter criteria</div>';
+                    return;
+                }
+
+                container.innerHTML = casesData.map(c => `
+                    <div class="card mb-xs ${currentCaseId === c.id ? 'active-case-card' : ''}" onclick="selectCase('${c.id}')" style="cursor: pointer; padding: 10px; margin-bottom: 6px; border: 1px solid var(--canvas-border); background: var(--canvas-surface); transition: all 0.12s;">
+                        <div class="flex justify-between items-center">
+                            <strong style="font-size: 0.82rem; color: var(--ink-deep);">${(c.case_type || 'Case').replace(/_/g, ' ').toUpperCase()}</strong>
+                            <span class="badge badge-${c.priority === 'high' ? 'danger' : 'warning'}" style="font-size: 0.6rem;">${c.priority.toUpperCase()}</span>
+                        </div>
+                        <div class="text-xs text-muted mt-xs" style="line-height: 1.35;">${c.summary || 'Requires officer evidence review'}</div>
+                        <div class="flex justify-between items-center mt-xs text-xs text-muted font-mono" style="font-size: 0.68rem;">
+                            <span>${getStatusBadge(c.status)}</span>
+                            <span>${formatDate(c.created_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const paramId = urlParams.get('id');
+                if (paramId && casesData.some(c => c.id === paramId)) {
+                    selectCase(paramId);
+                } else if (casesData.length > 0 && !currentCaseId) {
+                    selectCase(casesData[0].id);
+                }
+            } catch (error) {
+                console.error('Failed to load cases:', error);
+                showToast('Failed to load verification cases: ' + error.message, 'error');
+            }
+        }
+
+        async function selectCase(caseId) {
+            currentCaseId = caseId;
+
+            document.querySelectorAll('#cases-list .card').forEach(el => {
+                el.classList.remove('active-case-card');
+            });
+
+            try {
+                const caseDetail = await api(`/api/verification/cases/${caseId}`);
+                const isParcelAssociation = caseDetail.case_type === 'parcel_association_review';
+                const container = document.getElementById('case-detail-content');
+                const title = document.getElementById('detail-header-title');
+                const badge = document.getElementById('detail-status-badge');
+
+                title.textContent = `${caseDetail.case_type.replace(/_/g, ' ').toUpperCase()} (Docket #${caseDetail.id.substring(0, 8)})`;
+                badge.style.display = 'inline-block';
+                badge.innerHTML = getStatusBadge(caseDetail.status);
+
+                let discrepancyHtml = '';
+                if (caseDetail.discrepancy) {
+                    const d = caseDetail.discrepancy;
+                    discrepancyHtml = `
+                        <div class="card mb-md" style="background: var(--canvas-surface); border-left: 4px solid var(--state-review);">
+                            <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.35rem;">
+                                <span>Contradiction Evidence & Documentary Divergence</span>
+                                <span class="badge badge-warning">${d.severity.toUpperCase()} SEVERITY</span>
+                            </div>
+                            <div class="grid grid-2 gap-md p-xs">
+                                <div style="background: var(--canvas-panel); padding: 8px 10px; border-radius: 2px; border: 1px solid var(--canvas-border);">
+                                    <span class="text-muted text-xs font-mono">RECORD A (Prior Deed):</span>
+                                    <div class="font-medium font-mono mt-xs" style="color: var(--ink-deep);">${d.value_a || '—'}</div>
+                                </div>
+                                <div style="background: var(--canvas-panel); padding: 8px 10px; border-radius: 2px; border: 1px solid var(--canvas-border);">
+                                    <span class="text-muted text-xs font-mono">RECORD B (Subsequent Deed):</span>
+                                    <div class="font-medium font-mono mt-xs" style="color: var(--state-conflict);">${d.value_b || '—'}</div>
+                                </div>
+                            </div>
+                            <div class="p-xs mt-xs text-xs">
+                                <strong style="color: var(--ink-deep);">Evidentiary Rule:</strong> <span class="text-muted">${d.reason}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let historyHtml = '';
+                if (caseDetail.actions && caseDetail.actions.length > 0) {
+                    historyHtml = `
+                        <div class="mt-md">
+                            <h4 style="font-size: 0.88rem; font-weight: 600; color: var(--ink-deep); font-family: var(--font-serif);">Official Adjudication History</h4>
+                            <div class="table-container mt-xs">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Action Executed</th>
+                                            <th>Canonical Value Applied</th>
+                                            <th>Officer Minutes / Notes</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${caseDetail.actions.map(a => `
+                                            <tr>
+                                                <td><span class="badge badge-info">${a.action.toUpperCase()}</span></td>
+                                                <td>${a.original_value ? `<span class="font-mono">${a.original_value}</span> → <strong style="color: var(--state-verified);" class="font-mono">${a.corrected_value}</strong>` : '—'}</td>
+                                                <td class="text-xs" style="color: var(--ink-secondary);">${a.comment || '—'}</td>
+                                                <td><span class="font-mono text-xs">${formatDate(a.created_at)}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const origVal = caseDetail.discrepancy ? (caseDetail.discrepancy.value_b || caseDetail.discrepancy.value_a || '') : '';
+                const fieldNameVal = isParcelAssociation ? 'parcel_id' : (caseDetail.discrepancy ? (caseDetail.discrepancy.field_name || '') : '');
+
+                container.innerHTML = `
+                    <div class="mb-sm">
+                        <div class="font-medium" style="color: var(--ink-deep); font-size: 0.95rem;">${caseDetail.summary}</div>
+                        <div class="text-xs text-muted mt-xs font-mono">Priority: <strong>${caseDetail.priority.toUpperCase()}</strong> | Docket Ref: <code>${caseDetail.id}</code> | Ingested: ${formatDate(caseDetail.created_at)}</div>
+                        ${isParcelAssociation && caseDetail.document_id ? `<a class="btn btn-secondary btn-sm mt-sm" href="documents.html?document_id=${encodeURIComponent(caseDetail.document_id)}">Open source document</a>` : ''}
+                    </div>
+
+                    ${discrepancyHtml}
+
+                    <!-- Non-Destructive Ground Truth Adjudication Workspace -->
+                    <div class="card mt-md" style="border-top: 3px solid var(--survey-cadastral);">
+                        <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.35rem;">
+                            <span>${isParcelAssociation ? 'Parcel Association Review' : 'Revenue Officer Adjudication Docket'}</span>
+                            <span class="badge badge-success">Non-Destructive Ground Truth</span>
+                        </div>
+                        <div class="p-xs">
+                            <div class="alert alert-info mb-md text-xs">
+                                ℹ️ <strong>Legal Integrity Requirement:</strong> Corrections are recorded as canonical ground-truth in the non-destructive feedback stream. Original OCR extractions remain immutable for judicial non-repudiation.
+                            </div>
+                            <div class="grid grid-2 gap-md mb-md">
+                                <div>
+                                    <label class="label">${isParcelAssociation ? 'Association field' : 'Cadastral Attribute to Adjudicate'}</label>
+                                    <input type="text" id="action-field-name" class="input font-mono" placeholder="e.g. owner_name, area, survey_no" value="${fieldNameVal}" ${isParcelAssociation ? 'readonly' : ''}>
+                                </div>
+                                <div>
+                                    <label class="label">${isParcelAssociation ? 'Association status' : 'AI Extracted Candidate Value'}</label>
+                                    <input type="text" id="action-orig-value" class="input font-mono" placeholder="Extracted candidate value" value="${isParcelAssociation ? 'Unlinked; inspect the source document' : origVal}" ${isParcelAssociation ? 'readonly' : ''}>
+                                </div>
+                            </div>
+                            <div class="mb-md">
+                                <label class="label">${isParcelAssociation ? 'Existing target parcel ID or parcel code' : 'Verified Canonical Value (Authorized Ground Truth)'}</label>
+                                <input type="text" id="action-correct-value" class="input font-mono" placeholder="${isParcelAssociation ? 'Enter an existing parcel ID or code' : 'Enter verified canonical ground-truth value...'}">
+                            </div>
+                            <div class="mb-md">
+                                <label class="label">Mandatory Legal Justification & Revenue Minutes</label>
+                                <textarea id="action-comment" class="input" rows="2" placeholder="Record evidentiary reasons, survey references, or gazette citations for immutable audit trail..."></textarea>
+                            </div>
+                            <div class="flex gap-sm" style="flex-wrap: wrap;">
+                                ${isParcelAssociation ? '' : '<button onclick="submitAction(\'approve\')" class="btn btn-success btn-sm">✓ Certify & Approve Mutation</button>'}
+                                <button onclick="submitAction('correct')" class="btn btn-primary btn-sm">${isParcelAssociation ? 'Confirm parcel association' : '✎ Record Canonical Correction'}</button>
+                                <button onclick="submitAction('reject')" class="btn btn-danger btn-sm">✕ Issue Discrepancy Notice</button>
+                                <button onclick="submitAction('comment')" class="btn btn-secondary btn-sm">Add Officer Minute</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${historyHtml}
+                `;
+
+            } catch (error) {
+                console.error('Failed to load case detail:', error);
+                showToast('Failed to load case details: ' + error.message, 'error');
+            }
+        }
+
+        async function submitAction(actionType) {
+            if (!currentCaseId) return;
+
+            const fieldName = document.getElementById('action-field-name')?.value;
+            const origValue = document.getElementById('action-orig-value')?.value;
+            const correctValue = document.getElementById('action-correct-value')?.value;
+            const comment = document.getElementById('action-comment')?.value || `${actionType.toUpperCase()} action executed by Revenue Officer`;
+
+            try {
+                showToast(`Recording official action: ${actionType.toUpperCase()}...`, 'info');
+                await api(`/api/verification/cases/${currentCaseId}/actions`, {
+                    method: 'POST',
+                    body: {
+                        action: actionType,
+                        field_name: fieldName,
+                        original_value: origValue,
+                        corrected_value: correctValue,
+                        comment: comment
+                    }
+                });
+
+                showToast(`Official adjudication recorded in immutable audit log.`, 'success');
+                selectCase(currentCaseId);
+                loadCases();
+            } catch (error) {
+                console.error('Failed to submit action:', error);
+                showToast('Action submission failed: ' + error.message, 'error');
+            }
+        }
+
+        loadCases();
+    </script>
+</body>
+</html>

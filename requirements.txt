@@ -1,0 +1,32 @@
+# Core
+fastapi==0.115.12
+uvicorn[standard]==0.34.3
+sqlalchemy==2.0.41
+alembic==1.16.3
+psycopg[binary]==3.3.6
+GeoAlchemy2==0.20.0
+pydantic==2.11.7
+pydantic-settings==2.9.1
+
+# Auth
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# Image processing
+Pillow==11.2.1
+
+# OCR wrapper (requires a system Tesseract executable and trained language data)
+pytesseract==0.3.13
+# Optional RapidOCR neural engine; not required for the Tesseract multilingual path.
+# rapidocr-onnxruntime
+
+# NLP / Similarity
+rapidfuzz==3.13.0
+
+# GIS
+shapely==2.1.1
+
+# Utilities
+python-dateutil==2.9.0.post0
+aiofiles==24.1.0

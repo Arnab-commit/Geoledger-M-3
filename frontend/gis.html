@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — Cadastral GIS Spatial Workstation</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Draw CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <style>
+        .gis-workstation-container {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 12px;
+            height: calc(100vh - 128px);
+        }
+        @media (max-width: 1024px) {
+            .gis-workstation-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+        #map {
+            height: 100%;
+            min-height: 540px;
+            width: 100%;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--canvas-border);
+            z-index: 1;
+            background: #E8E5DF;
+        }
+        .gis-hud-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: var(--canvas-surface);
+            padding: 6px 12px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--canvas-border);
+            margin-bottom: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        .map-legend {
+            background: var(--canvas-surface);
+            padding: 8px 12px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--canvas-border);
+            box-shadow: var(--shadow-md);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--ink-primary);
+        }
+        .map-legend i {
+            width: 12px;
+            height: 12px;
+            float: left;
+            margin-right: 6px;
+            margin-top: 3px;
+            border-radius: 2px;
+        }
+        .leaflet-popup-content {
+            font-family: var(--font-body);
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--ink-primary);
+            min-width: 250px;
+        }
+        .stat-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: var(--radius-xs);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .stat-badge-success { background: var(--state-verified-bg); color: var(--state-verified); border: 1px solid var(--state-verified-border); }
+        .stat-badge-danger { background: var(--state-conflict-bg); color: var(--state-conflict); border: 1px solid var(--state-conflict-border); }
+        .stat-badge-warning { background: var(--state-review-bg); color: var(--state-review); border: 1px solid var(--state-review-border); }
+        .stat-badge-info { background: var(--state-info-bg); color: var(--state-info); border: 1px solid var(--state-info-border); }
+        .audit-item {
+            border-left: 2px solid var(--survey-cadastral);
+            padding-left: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link active">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">Cadastral GIS Spatial Workstation</div>
+                        <div class="header-subtitle">Interactive Polygon Drafting, Pan-India Dynamic UTM Geodesic Calculation & Boundary Audit</div>
+                    </div>
+                </div>
+
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <button onclick="refreshGisMap()" class="btn btn-secondary btn-sm">↻ Sync Map</button>
+                    <button id="btn-draw-header" onclick="startDrawingMode()" class="btn btn-primary btn-sm" style="display:none;">➕ Draw Boundary</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content" style="padding-bottom: 0.5rem;">
+                <!-- GIS Precision Survey HUD Toolbar -->
+                <div class="gis-hud-toolbar">
+                    <div class="text-xs text-muted" style="display:flex; gap:8px; align-items:center; white-space:nowrap;">
+                        <label><input type="checkbox" class="gis-status-filter" value="verified" checked onchange="loadAllParcelsGisData()"> Verified</label>
+                        <label><input type="checkbox" class="gis-status-filter" value="pending" checked onchange="loadAllParcelsGisData()"> Pending</label>
+                        <label><input type="checkbox" class="gis-status-filter" value="discrepancy" checked onchange="loadAllParcelsGisData()"> Discrepancies</label>
+                    </div>
+                    <div style="flex: 1; min-width: 260px; display: flex; align-items: center; gap: 8px;">
+                        <input id="gis-map-search" class="input" style="max-width: 220px; height: 30px;" placeholder="Search parcel, ULPIN, survey, owner..." aria-label="Search parcels on map" oninput="scheduleGisSearch()">
+                        <span class="text-xs font-mono text-muted" style="white-space: nowrap;">TARGET PARCEL:</span>
+                        <select id="gis-parcel-select" class="input" style="padding: 3px 8px; font-size: 0.8rem; height: 30px;" onchange="onParcelDropdownChange()">
+                            <option value="">Loading cadastral parcels from database...</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                        <label id="gis-source-page-control" class="text-xs text-muted" style="display:none;">SOURCE PAGE <input id="gis-source-page" type="number" min="1" class="input" style="width:68px; height:28px; padding:2px 4px;" aria-label="Source document page"></label>
+                        <button id="btn-draw" onclick="startDrawingMode()" class="btn btn-sm btn-secondary" title="Draft boundary polygon on map" style="display:none;">
+                            ✏️ Draft
+                        </button>
+                        <button id="btn-edit" onclick="startEditingMode()" class="btn btn-sm btn-secondary" title="Edit vertices of selected parcel boundary" disabled>
+                            📐 Edit Vertices
+                        </button>
+                        <button id="btn-save" onclick="saveActiveGeometryToDb()" class="btn btn-sm btn-success" title="Save boundary to database" style="display: none;">
+                            💾 Save Geometry
+                        </button>
+                        <button id="btn-cancel" onclick="cancelEditingMode()" class="btn btn-sm btn-secondary" title="Cancel edit" style="display: none;">
+                            ✕ Cancel
+                        </button>
+                        <button id="btn-delete" onclick="deleteActiveGeometry()" class="btn btn-sm btn-danger" title="Delete geometry from database" style="display: none;">
+                            🗑️ Delete
+                        </button>
+                    </div>
+
+                    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                        <span class="badge badge-info" id="utm-zone-indicator" style="font-size: 0.62rem;">Dynamic UTM (Pan-India Zones 42N–47N)</span>
+                        <span id="gis-map-badge" class="stat-badge stat-badge-info">Loading records...</span>
+                    </div>
+                </div>
+
+                <!-- Two-Column Workstation: Full-Bleed Map Canvas + Sleek Parcel Dossier Drawer -->
+                <div class="gis-workstation-container">
+                    <!-- Map Canvas Container -->
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                        <div id="map"></div>
+                    </div>
+
+                    <!-- Spatial Details & Validation Drawer -->
+                    <div class="card" style="height: 100%; display: flex; flex-direction: column; overflow-y: auto; padding: 0.85rem;">
+                        <div class="card-header" style="padding-bottom: 0.35rem; margin-bottom: 0.5rem;">
+                            <span class="font-bold" style="font-size: 0.88rem;">Cadastral Dossier</span>
+                            <span id="validation-pill" class="stat-badge stat-badge-info">SELECT PARCEL</span>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="panel-empty" style="text-align: center; padding: 40px 10px; color: var(--ink-muted);">
+                            <div style="font-size: 2.2rem; margin-bottom: 8px; color: var(--survey-cadastral);">🗺️</div>
+                            <h4 class="font-bold text-sm" style="color: var(--ink-deep);">No Parcel Selected</h4>
+                            <p class="text-xs mt-xs" style="color: var(--ink-secondary);">
+                                Select a parcel from the target dropdown or click any cadastral polygon on the map to inspect title holders, deed areas, and geodetic variance.
+                            </p>
+                        </div>
+
+                        <!-- Real Selected Parcel Inspector -->
+                        <div id="panel-content" style="display: none; font-size: 0.8rem;">
+                            <!-- Identity Card -->
+                            <div class="record-panel mb-sm" style="background: var(--canvas-surface); padding: 8px 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div>
+                                        <div class="text-xs text-muted font-mono" id="detail-parcel-code">PARCEL CODE</div>
+                                        <div class="font-bold mt-xs" style="font-size: 0.95rem; color: var(--ink-deep);" id="detail-owner-name">—</div>
+                                    </div>
+                                    <span id="detail-verification-status" class="badge badge-info">Pending</span>
+                                </div>
+                                <div class="text-xs text-muted mt-xs" id="detail-co-owners" style="display: none;"></div>
+                                <div class="text-xs text-muted mt-xs" id="detail-father-name"></div>
+                            </div>
+                            <div class="text-xs text-muted mb-sm" id="detail-geometry-provenance">Geometry source and quality: —</div>
+
+                            <!-- Revenue Location Coordinates -->
+                            <div class="table-container mb-sm" style="border: 1px solid var(--canvas-border);">
+                                <table style="font-size: 11px;">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted" style="width: 42%; padding: 4px 6px; font-family: var(--font-mono);">Survey / Khasra:</td>
+                                            <td class="font-bold font-mono" id="detail-survey-no" style="padding: 4px 6px;">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted" style="padding: 4px 6px; font-family: var(--font-mono);">Khata / Khatian:</td>
+                                            <td class="font-bold font-mono" id="detail-khata-no" style="padding: 4px 6px;">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted" style="padding: 4px 6px; font-family: var(--font-mono);">Village / Mouza:</td>
+                                            <td class="font-bold" id="detail-village" style="padding: 4px 6px;">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted" style="padding: 4px 6px; font-family: var(--font-mono);">District / State:</td>
+                                            <td class="font-bold" id="detail-district" style="padding: 4px 6px;">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted" style="padding: 4px 6px; font-family: var(--font-mono);">Classification:</td>
+                                            <td class="font-bold" id="detail-classification" style="padding: 4px 6px;">—</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Area Validation Matrix -->
+                            <div class="record-panel mb-sm" style="border-left: 3px solid var(--survey-cadastral); padding: 8px 10px;">
+                                <div class="text-xs text-muted font-mono font-bold">GEODESIC AREA VALIDATION</div>
+                                <div class="grid grid-2 gap-xs mt-xs">
+                                    <div>
+                                        <div class="text-xs text-muted font-mono">RECORDED DEED</div>
+                                        <div class="font-bold font-mono num-tabular" style="font-size: 0.95rem; color: var(--ink-deep);" id="detail-doc-area">—</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-muted font-mono">GIS GEODESIC</div>
+                                        <div class="font-bold font-mono num-tabular" style="font-size: 0.95rem; color: var(--survey-cadastral);" id="detail-gis-area">—</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-muted mt-xs font-mono" id="detail-variance-text">Variance: —</div>
+                            </div>
+
+                            <!-- Discrepancy Alert Box -->
+                            <div id="detail-validation-alert" class="alert alert-info mb-sm" style="padding: 6px 10px; font-size: 11px;">
+                                <strong id="detail-validation-title">Validation Status</strong>
+                                <p class="text-xs mt-xs" id="detail-validation-explanation">—</p>
+                            </div>
+
+                            <!-- Workspace Actions -->
+                            <div class="grid grid-2 gap-xs mt-xs">
+                                <button onclick="viewInDigitalTwin()" class="btn btn-sm btn-secondary" style="width: 100%;">
+                                    🏛️ Digital Twin
+                                </button>
+                                <button onclick="viewInVerificationQueue()" id="btn-verify-queue" class="btn btn-sm btn-primary" style="width: 100%;">
+                                    🛡️ Verification
+                                </button>
+                            </div>
+
+                            <!-- Spatial Audit Log -->
+                            <div class="mt-sm" id="audit-trail-container" style="display: none;">
+                                <div class="text-xs font-bold text-muted font-mono mb-xs">RECENT SPATIAL MUTATIONS</div>
+                                <div id="audit-events-list" style="max-height: 100px; overflow-y: auto;"></div>
+                            </div>
+                            <div class="mt-sm" id="linked-documents-container">
+                                <div class="text-xs font-bold text-muted font-mono mb-xs">LINKED RECORDS</div>
+                                <div id="linked-documents-list" class="text-xs text-muted">Loading linked records…</div>
+                            </div>
+                            <div class="mt-sm" id="geometry-history-container">
+                                <div class="text-xs font-bold text-muted font-mono mb-xs">GEOMETRY HISTORY</div>
+                                <div id="geometry-history-list" class="text-xs text-muted">Loading history…</div>
+                            </div>
+                            <div class="mt-sm" id="verification-history-container">
+                                <div class="text-xs font-bold text-muted font-mono mb-xs">VERIFICATION EVENTS</div>
+                                <div id="verification-history-list" class="text-xs text-muted">Loading verification history…</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        function canEditGis() {
+            const role = String(Auth.getUser()?.role || '').trim().toLowerCase().replace(/[ -]+/g, '_');
+            return ['revenue_officer', 'verifier', 'admin', 'super_admin'].includes(role);
+        }
+
+        function applyGisEditPermissions() {
+            const allowed = canEditGis();
+            ['btn-draw-header', 'btn-draw'].forEach(id => {
+                document.getElementById(id).style.display = allowed ? '' : 'none';
+            });
+            if (!allowed) {
+                ['btn-edit', 'btn-save', 'btn-cancel', 'btn-delete'].forEach(id => {
+                    document.getElementById(id).style.display = 'none';
+                });
+            }
+            if (sourceDocumentId && allowed) {
+                const pageControl = document.getElementById('gis-source-page-control');
+                const pageInput = document.getElementById('gis-source-page');
+                pageControl.style.display = 'inline-flex';
+                pageInput.value = sourceDocumentPage || '';
+                pageInput.addEventListener('input', () => {
+                    const page = Number(pageInput.value);
+                    sourceDocumentPage = Number.isInteger(page) && page > 0 ? page : null;
+                });
+            }
+        }
+
+        // Application State
+        let map = null;
+        let drawnItems = null;
+        let drawControl = null;
+        let activeGeoJsonLayer = null;
+        let allParcelsGeoJson = null;
+        let allParcelsList = [];
+        let activeParcelId = null;
+        const gisUrlParams = new URLSearchParams(window.location.search);
+        const sourceDocumentId = gisUrlParams.get('document_id');
+        let sourceDocumentPage = Number(gisUrlParams.get('source_page')) || null;
+        let activeGeometryId = null;
+        let activeFeatureData = null;
+        let isEditingMode = false;
+        let isDrawingMode = false;
+        let gisSearchTimer = null;
+        let hasInitialMapFit = false;
+        let mapRequestSequence = 0;
+        let activeParcelAreaComparable = false;
+
+        // Tile Layers
+        let osmLayer = null;
+        let satelliteLayer = null;
+
+        function initMap() {
+            // Center on default India coordinates
+            map = L.map('map', {
+                center: [23.25, 87.07],
+                zoom: 14,
+                zoomControl: true
+            });
+
+            // Standard OSM layer
+            osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors | GeoLedger Cadastral Intelligence'
+            }).addTo(map);
+
+            // Satellite Imagery layer (Esri World Imagery)
+            satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: 'Tiles &copy; Esri &mdash; Cadastral Layer'
+            });
+
+            // Base Layer Switcher Control
+            const baseMaps = {
+                "Cadastral Map (OSM)": osmLayer,
+                "Satellite Aerial Imagery": satelliteLayer
+            };
+            L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+            // Feature group for drawing and editable layers
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Configure Leaflet.draw Toolbar
+            drawControl = new L.Control.Draw({
+                position: 'topleft',
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        showArea: true,
+                        drawError: {
+                            color: '#b0271d',
+                            message: '<strong>Topology Error:</strong> Boundary lines cannot self-intersect!'
+                        },
+                        shapeOptions: {
+                            color: '#1D4B66',
+                            fillColor: '#1D4B66',
+                            fillOpacity: 0.35,
+                            weight: 2.5
+                        }
+                    },
+                    rectangle: {
+                        shapeOptions: {
+                            color: '#1D4B66',
+                            fillColor: '#1D4B66',
+                            fillOpacity: 0.35,
+                            weight: 2.5
+                        }
+                    },
+                    polyline: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+            });
+            map.addControl(drawControl);
+            map.on('moveend', () => loadAllParcelsGisData());
+
+            // Add Map Legend
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function () {
+                const div = L.DomUtil.create('div', 'map-legend');
+                div.innerHTML = `
+                    <div style="font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Cadastral Boundaries</div>
+                    <div><i style="background: var(--state-verified);"></i> Valid (&le;10% variance)</div>
+                    <div><i style="background: var(--state-conflict);"></i> Discrepancy (>10% variance)</div>
+                    <div><i style="background: var(--survey-cadastral);"></i> Active Boundary Drafting</div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+
+            // Register Leaflet.draw Event Handlers
+            map.on(L.Draw.Event.CREATED, function (e) {
+                const layer = e.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
+
+                const geojson = layer.toGeoJSON();
+                activeFeatureData = geojson;
+
+                isDrawingMode = false;
+                showEditButtons(true);
+                computeAndPreviewArea(geojson);
+            });
+
+            map.on(L.Draw.Event.EDITED, function (e) {
+                const layers = e.layers;
+                layers.eachLayer(function (layer) {
+                    const geojson = layer.toGeoJSON();
+                    activeFeatureData = geojson;
+                    computeAndPreviewArea(geojson);
+                });
+            });
+
+            map.on(L.Draw.Event.DELETED, function () {
+                activeFeatureData = null;
+                showEditButtons(false);
+                showToast('Geometry removed from active drafting workspace', 'info');
+            });
+
+            // Load initial parcels and GIS geometries
+            loadParcelsDropdown();
+            loadAllParcelsGisData();
+        }
+
+        // Load all database parcels into dropdown
+        async function loadParcelsDropdown() {
+            try {
+                const parcels = await api('/api/parcels');
+                allParcelsList = parcels || [];
+                const select = document.getElementById('gis-parcel-select');
+
+                if (allParcelsList.length === 0) {
+                    select.innerHTML = '<option value="">No parcels found in database</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">-- Select Parcel Digital Twin --</option>' +
+                    allParcelsList.map(p => {
+                        const ownerText = p.current_owner ? ` | Holder: ${p.current_owner}` : '';
+                        const areaText = p.current_area ? ` | ${p.current_area} ${p.area_unit || 'acres'}` : '';
+                        return `<option value="${p.id}">${p.parcel_code} (${p.village})${ownerText}${areaText}</option>`;
+                    }).join('');
+
+                const urlParcelId = gisUrlParams.get('parcel_id') || gisUrlParams.get('id');
+                if (urlParcelId) {
+                    select.value = urlParcelId;
+                    onParcelDropdownChange();
+                }
+            } catch (err) {
+                console.error('Failed to load parcels dropdown:', err);
+                showToast('Error loading parcel list: ' + err.message, 'error');
+            }
+        }
+
+        // Load all GeoJSON geometries from /api/gis/parcels
+        async function loadAllParcelsGisData() {
+            try {
+                const bounds = map.getBounds();
+                const params = new URLSearchParams({
+                    min_lon: bounds.getWest(), min_lat: bounds.getSouth(),
+                    max_lon: bounds.getEast(), max_lat: bounds.getNorth(), limit: '1000'
+                });
+                const search = document.getElementById('gis-map-search')?.value.trim();
+                if (search) params.set('search', search);
+                const requestId = ++mapRequestSequence;
+                const res = await api(`/api/gis/parcels?${params.toString()}`);
+                if (requestId !== mapRequestSequence) return;
+                allParcelsGeoJson = res;
+
+                if (activeGeoJsonLayer) {
+                    map.removeLayer(activeGeoJsonLayer);
+                }
+
+                const badge = document.getElementById('gis-map-badge');
+                if (!res || !res.features || res.features.length === 0) {
+                    badge.textContent = '0 Mapped Boundaries';
+                    badge.className = 'stat-badge stat-badge-warning';
+                    return;
+                }
+
+                badge.textContent = `${res.features.length} Cadastral Polygons Mapped`;
+                badge.className = 'stat-badge stat-badge-success';
+
+                // Render GeoJSON onto map
+                activeGeoJsonLayer = L.geoJSON(res, {
+                    filter: gisFeatureVisible,
+                    style: parcelMapStyle,
+                    onEachFeature: function (feature, layer) {
+                        const props = feature.properties;
+                        const statusBadge = props.validation_status === 'MATCH'
+                            ? '<span class="stat-badge stat-badge-success">✓ MATCH</span>'
+                            : props.validation_status === 'DISCREPANCY'
+                            ? '<span class="stat-badge stat-badge-danger">⚠ DISCREPANCY</span>'
+                            : '<span class="stat-badge stat-badge-info">UNCHECKED</span>';
+
+                        const popupHtml = `
+                            <div style="font-family: var(--font-body); font-size: 12px; line-height: 1.5;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--canvas-border); padding-bottom: 4px; margin-bottom: 6px;">
+                                    <strong style="color: var(--ink-deep); font-size: 13px;" class="font-mono">${escapeGisHtml(props.parcel_code)}</strong>
+                                    ${statusBadge}
+                                </div>
+                                <div><strong style="color: var(--survey-cadastral);">Holder:</strong> <span>${escapeGisHtml(props.owner_name)}</span></div>
+                                ${props.co_owners && props.co_owners.length > 0 ? `<div><strong style="color: var(--survey-cadastral);">Co-holders:</strong> <span>${props.co_owners.map(escapeGisHtml).join(', ')}</span></div>` : ''}
+                                <div><strong style="color: var(--survey-cadastral);">Survey No:</strong> <span class="font-mono">${escapeGisHtml(props.survey_number || props.parcel_code)}</span></div>
+                                <div><strong style="color: var(--survey-cadastral);">Village:</strong> <span>${escapeGisHtml(props.village)}</span>, ${escapeGisHtml(props.district)}</div>
+                                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--canvas-border);">
+                                    <div><strong style="color: var(--survey-cadastral);">Recorded Deed:</strong> <span class="font-mono">${props.recorded_area != null ? `${props.recorded_area} ${escapeGisHtml(props.area_unit || '')}` : 'Unrecorded'}</span></div>
+                                    <div><strong style="color: var(--survey-cadastral);">GIS Geodesic:</strong> <span class="font-mono">${props.calculated_area ? props.calculated_area.toFixed(4) + ' acres' : '—'}</span></div>
+                                    <div><strong style="color: var(--survey-cadastral);">Variance:</strong> <span class="font-mono">${props.variance_percent !== undefined ? props.variance_percent.toFixed(2) + '%' : '—'}</span></div>
+                                </div>
+                                <div style="margin-top: 8px; text-align: center;">
+                                    <button data-parcel-id="${escapeGisHtml(props.parcel_id)}" class="btn btn-sm btn-primary" style="padding: 2px 8px; font-size: 11px; width: 100%;">
+                                        Inspect In Dossier
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        layer.bindPopup(popupHtml);
+                        layer.on('popupopen', function (event) {
+                            event.popup.getElement()?.querySelector('[data-parcel-id]')?.addEventListener('click', clickEvent => {
+                                selectParcelFromMap(clickEvent.currentTarget.dataset.parcelId);
+                            });
+                        });
+
+                        layer.on('click', function () {
+                            selectParcelFromMap(props.parcel_id);
+                        });
+                    }
+                }).addTo(map);
+
+                if (res.features.length > 0 && !activeParcelId && !hasInitialMapFit) {
+                    map.fitBounds(activeGeoJsonLayer.getBounds(), { padding: [30, 30] });
+                    hasInitialMapFit = true;
+                }
+
+            } catch (err) {
+                console.error('Failed to load GIS geometries:', err);
+                showToast('Could not load GIS geometries: ' + err.message, 'error');
+            }
+        }
+
+        function scheduleGisSearch() {
+            clearTimeout(gisSearchTimer);
+            gisSearchTimer = setTimeout(() => loadAllParcelsGisData(), 350);
+        }
+
+        // User selected parcel from dropdown
+        async function onParcelDropdownChange() {
+            const select = document.getElementById('gis-parcel-select');
+            const parcelId = select.value;
+
+            if (!parcelId) {
+                document.getElementById('panel-empty').style.display = 'block';
+                document.getElementById('panel-content').style.display = 'none';
+                document.getElementById('btn-edit').disabled = true;
+                showEditButtons(false);
+                drawnItems.clearLayers();
+                activeParcelId = null;
+                return;
+            }
+
+            activeParcelId = parcelId;
+            await loadParcelDetailsAndGeometry(parcelId);
+            activeGeoJsonLayer?.setStyle(parcelMapStyle);
+        }
+
+        // User clicked parcel polygon on the map
+        function selectParcelFromMap(parcelId) {
+            const select = document.getElementById('gis-parcel-select');
+            select.value = parcelId;
+            activeParcelId = parcelId;
+            loadParcelDetailsAndGeometry(parcelId);
+            activeGeoJsonLayer?.setStyle(parcelMapStyle);
+        }
+
+        // Fetch detailed GIS record for a single parcel and focus map
+        async function loadParcelDetailsAndGeometry(parcelId) {
+            try {
+                const data = await api(`/api/gis/parcels/${parcelId}`);
+                renderParcelDetailsPanel(data);
+                renderLinkedDocuments(data.linked_documents || []);
+                loadGeometryHistory(parcelId);
+                renderVerificationHistory(data.verification_cases || []);
+
+                drawnItems.clearLayers();
+                if (data.active_geometry && data.active_geometry.geometry) {
+                    activeGeometryId = data.active_geometry.id;
+                    const layer = L.geoJSON(data.active_geometry.geometry, {
+                        style: {
+                            color: '#1D4B66',
+                            weight: 2.5,
+                            fillColor: '#1D4B66',
+                            fillOpacity: 0.4
+                        }
+                    });
+
+                    layer.eachLayer(l => drawnItems.addLayer(l));
+                    map.fitBounds(drawnItems.getBounds(), { padding: [40, 40] });
+
+                    document.getElementById('btn-edit').disabled = !canEditGis();
+                    document.getElementById('btn-edit').style.display = canEditGis() ? 'inline-block' : 'none';
+                    document.getElementById('btn-delete').style.display = canEditGis() ? 'inline-block' : 'none';
+                    activeFeatureData = data.active_geometry.geometry;
+                } else {
+                    activeGeometryId = null;
+                    document.getElementById('btn-edit').disabled = true;
+                    document.getElementById('btn-delete').style.display = 'none';
+                    showToast('No geometry mapped yet for this parcel. Click "Draw Boundary" to draft one.', 'info');
+                }
+
+            } catch (err) {
+                console.error('Failed to load parcel details:', err);
+                showToast('Failed to load parcel GIS details: ' + err.message, 'error');
+            }
+        }
+
+        // Render the right-hand Spatial Validation & Digital Twin panel
+        function renderParcelDetailsPanel(data) {
+            document.getElementById('panel-empty').style.display = 'none';
+            document.getElementById('panel-content').style.display = 'block';
+
+            const p = data.parcel;
+            document.getElementById('detail-parcel-code').textContent = p.parcel_code + (p.ulpin ? ` (ULPIN: ${p.ulpin})` : '');
+            document.getElementById('detail-owner-name').textContent = p.current_owner || 'Title holder information unavailable.';
+
+            const coOwnersEl = document.getElementById('detail-co-owners');
+            if (p.co_owners && p.co_owners.length > 0) {
+                coOwnersEl.style.display = 'block';
+                coOwnersEl.textContent = 'Co-holders: ' + p.co_owners.join(', ');
+            } else {
+                coOwnersEl.style.display = 'none';
+            }
+
+            const fatherEl = document.getElementById('detail-father-name');
+            fatherEl.textContent = p.father_husband_name ? `Parentage: S/o, W/o, D/o ${p.father_husband_name}` : '';
+
+            const statusEl = document.getElementById('detail-verification-status');
+            statusEl.textContent = (p.verification_status || 'Pending').toUpperCase();
+            statusEl.className = p.verification_status === 'verified' ? 'badge badge-success' : 'badge badge-info';
+
+            const idMap = p.identifiers || {};
+            document.getElementById('detail-survey-no').textContent = idMap.survey_no || idMap.plot_no || idMap.khasra_no || p.parcel_code;
+            document.getElementById('detail-khata-no').textContent = idMap.khata_no || idMap.khatian_no || '—';
+            document.getElementById('detail-village').textContent = `${p.village || 'Unspecified'} (${p.mouza || ''})`;
+            document.getElementById('detail-district').textContent = `${p.district || 'Unspecified'}, ${p.state || 'India'}`;
+            document.getElementById('detail-classification').textContent = p.land_classification || 'Agricultural';
+
+            const docArea = p.current_area;
+            activeParcelAreaComparable = ['acre', 'acres', 'एकड़', 'একর', 'એકર', 'ஏக்கர்', 'ఎకరాలు', 'ಎಕರೆ', 'ഏക്കർ', 'ଏକର', 'ਏਕੜ', 'ایکڑ'].includes(String(p.area_unit || '').normalize('NFKC').trim().toLowerCase());
+            const gisArea = data.active_geometry ? data.active_geometry.calculated_area : null;
+            const geometry = data.active_geometry;
+            document.getElementById('detail-geometry-provenance').textContent = geometry
+                ? `Geometry source: ${geometry.source || 'unavailable'} · CRS: ${geometry.crs || 'unknown'} · Valid: ${geometry.geometry_valid ? 'Yes' : 'No'} · Verification: ${geometry.verification_status || 'unknown'} · Confidence: ${geometry.confidence == null ? 'Not provided' : geometry.confidence}`
+                : 'No parcel geometry available.';
+
+            document.getElementById('detail-doc-area').textContent = docArea ? `${docArea} ${p.area_unit || 'acres'}` : 'Unrecorded';
+            document.getElementById('detail-gis-area').textContent = gisArea ? `${gisArea.toFixed(4)} acres` : 'Unmapped';
+
+            const valPill = document.getElementById('validation-pill');
+            const alertBox = document.getElementById('detail-validation-alert');
+            const alertTitle = document.getElementById('detail-validation-title');
+            const alertExp = document.getElementById('detail-validation-explanation');
+            const varText = document.getElementById('detail-variance-text');
+
+            if (data.area_validation) {
+                const comp = data.area_validation;
+                varText.textContent = `Variance: ${comp.variance_percent.toFixed(2)}% (${comp.variance_acres.toFixed(4)} acres deviation)`;
+
+                if (comp.within_tolerance) {
+                    valPill.textContent = '✓ VERIFIED MATCH';
+                    valPill.className = 'stat-badge stat-badge-success';
+                    alertBox.className = 'alert alert-success mb-sm';
+                    alertTitle.textContent = '✓ Area Validated (Within 10% Cadastral Tolerance)';
+                    alertExp.textContent = comp.explanation;
+                } else {
+                    valPill.textContent = '⚠ DISCREPANCY';
+                    valPill.className = 'stat-badge stat-badge-danger';
+                    alertBox.className = 'alert alert-danger mb-sm';
+                    alertTitle.textContent = '⚠ Area Contradiction Detected';
+                    alertExp.textContent = comp.explanation;
+                }
+            } else if (data.active_geometry) {
+                valPill.textContent = 'AREA COMPARISON UNAVAILABLE';
+                valPill.className = 'stat-badge stat-badge-warning';
+                alertBox.className = 'alert alert-info mb-sm';
+                alertTitle.textContent = 'Boundary Available; area comparison is unavailable';
+                alertExp.textContent = data.area_validation_note || 'The recorded area is missing or uses a unit that cannot be safely compared automatically.';
+                varText.textContent = 'Variance: Not Computed';
+            } else {
+                valPill.textContent = 'PENDING MAPPING';
+                valPill.className = 'stat-badge stat-badge-info';
+                alertBox.className = 'alert alert-info mb-sm';
+                alertTitle.textContent = 'No Spatial Boundary Mapped';
+                alertExp.textContent = 'Draw a boundary polygon to compute dynamic geodesic area via Pan-India UTM projection.';
+                varText.textContent = 'Variance: Not Computed';
+            }
+
+            // Spatial Audit trail
+            const auditList = document.getElementById('audit-events-list');
+            const auditContainer = document.getElementById('audit-trail-container');
+            if (data.audit_history && data.audit_history.length > 0) {
+                auditContainer.style.display = 'block';
+                auditList.innerHTML = data.audit_history.map(ev => `
+                    <div class="audit-item">
+                    <strong style="color: var(--ink-deep);">${escapeGisHtml(ev.action)}</strong>
+                        <div class="text-xs text-muted font-mono">${formatDate(ev.created_at)} by ${escapeGisHtml(ev.user_id || 'Unknown user')}</div>
+                        <div class="text-xs" style="color: var(--ink-secondary);">${escapeGisHtml(ev.details || '')}</div>
+                    </div>
+                `).join('');
+            } else {
+                auditContainer.style.display = 'none';
+            }
+        }
+
+        function escapeGisHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[ch]);
+        }
+
+        function gisFeatureVisible(feature) {
+            const p = feature.properties || {};
+            const enabled = new Set(Array.from(document.querySelectorAll('.gis-status-filter:checked')).map(input => input.value));
+            const verified = String(p.geometry_verification_status || p.parcel_verification_status || '').toLowerCase() === 'verified';
+            const discrepancy = p.has_discrepancy || p.validation_status === 'DISCREPANCY';
+            if (discrepancy) return enabled.has('discrepancy');
+            return verified ? enabled.has('verified') : enabled.has('pending');
+        }
+
+        function parcelMapStyle(feature) {
+            const p = feature.properties || {};
+            const status = p.validation_status;
+            const color = status === 'MATCH' ? '#226438' : status === 'DISCREPANCY' ? '#B0271D' : '#1D4B66';
+            const selected = p.parcel_id === activeParcelId;
+            return { color: selected ? '#B56A12' : color, weight: selected ? 4 : 2.5, opacity: 0.95, fillColor: selected ? '#B56A12' : color, fillOpacity: selected ? 0.58 : 0.35 };
+        }
+
+        function renderLinkedDocuments(documents) {
+            const container = document.getElementById('linked-documents-list');
+            if (!documents.length) {
+                container.textContent = 'No documents visible for this parcel.';
+                return;
+            }
+            container.innerHTML = `<div class="text-muted mb-xs">${documents.length} linked document(s); newest first</div>` + documents.map(doc =>
+                `<div class="audit-item"><a href="documents.html?document_id=${encodeURIComponent(doc.id)}" class="link">${escapeGisHtml(doc.filename)}</a> <span class="badge badge-secondary">${escapeGisHtml(doc.document_type)}</span></div>`
+            ).join('');
+        }
+
+        function renderVerificationHistory(cases) {
+            const list = document.getElementById('verification-history-list');
+            if (!cases.length) {
+                list.textContent = 'No verification cases are linked to this parcel.';
+                return;
+            }
+            list.innerHTML = cases.map(item => `<div class="audit-item">
+                <strong>${escapeGisHtml(item.case_type)} · ${escapeGisHtml(item.status)}</strong>
+                <div>${formatDate(item.created_at)} · ${escapeGisHtml(item.summary || '')}</div>
+            </div>`).join('');
+        }
+
+        async function loadGeometryHistory(parcelId) {
+            const list = document.getElementById('geometry-history-list');
+            try {
+                const data = await api(`/api/gis/parcels/${parcelId}/geometry/history`);
+                if (!data.versions.length) {
+                    list.textContent = 'No geometry edits have been recorded since history tracking was added.';
+                    return;
+                }
+                list.innerHTML = data.versions.map(v => `<div class="audit-item">
+                    <strong>v${v.version_number} · ${escapeGisHtml(v.event_type)}</strong>
+                    <div>${formatDate(v.created_at)} · ${escapeGisHtml(v.source || 'Source unavailable')} · ${v.calculated_area == null ? 'Area unavailable' : `${Number(v.calculated_area).toFixed(4)} ${escapeGisHtml(v.area_unit || 'acres')}`}</div>
+                    <div>${escapeGisHtml(v.reason || '')}</div>
+                </div>`).join('');
+            } catch (error) {
+                list.textContent = `History could not be loaded: ${error.message}`;
+            }
+        }
+
+        // Compute preview area in real time while drawing/editing
+        async function computeAndPreviewArea(geojson) {
+            try {
+                const res = await api('/api/gis/calculate-area', {
+                    method: 'POST',
+                    body: {
+                        geometry: geojson.geometry || geojson,
+                        state: 'India'
+                    }
+                });
+
+                if (res) {
+                    document.getElementById('detail-gis-area').textContent = `${res.calculated_area_acres.toFixed(4)} acres`;
+                    showToast(`Computed Geodesic Area: ${res.calculated_area_acres.toFixed(4)} acres (${res.calculated_area_sqm.toFixed(1)} m²) via ${res.utm_zone}`, 'info');
+
+                    const docAreaText = document.getElementById('detail-doc-area').textContent;
+                    const docAreaVal = parseFloat(docAreaText);
+                    if (activeParcelAreaComparable && !isNaN(docAreaVal) && docAreaVal > 0) {
+                        const variance = Math.abs(res.calculated_area_acres - docAreaVal);
+                        const pct = (variance / docAreaVal) * 100;
+                        document.getElementById('detail-variance-text').textContent = `Variance: ${pct.toFixed(2)}% (${variance.toFixed(4)} acres)`;
+                    }
+                }
+            } catch (err) {
+                console.error('Area calculation error:', err);
+            }
+        }
+
+        // Trigger Leaflet.Draw Polygon mode
+        function startDrawingMode() {
+            if (!canEditGis()) {
+                showToast('Your account does not have permission to edit parcel geometry.', 'error');
+                return;
+            }
+            if (!activeParcelId) {
+                showToast('Please select a Target Parcel Digital Twin first from the top selector', 'warning');
+                return;
+            }
+
+            drawnItems.clearLayers();
+            isDrawingMode = true;
+            new L.Draw.Polygon(map, drawControl.options.draw.polygon).enable();
+            showToast('Click points on the map to define the boundary vertices. Double-click or click initial point to close.', 'info');
+        }
+
+        // Trigger Leaflet.Draw Edit mode
+        function startEditingMode() {
+            if (!canEditGis()) return;
+            if (drawnItems.getLayers().length === 0) {
+                showToast('No active boundary to edit. Draw a boundary first.', 'warning');
+                return;
+            }
+
+            isEditingMode = true;
+            drawnItems.eachLayer(l => {
+                if (l.editing) l.editing.enable();
+            });
+            showEditButtons(true);
+            showToast('Drag parcel vertices to adjust geometry. Click "Save Geometry" when finished.', 'info');
+        }
+
+        function cancelEditingMode() {
+            isEditingMode = false;
+            drawnItems.eachLayer(l => {
+                if (l.editing) l.editing.disable();
+            });
+            if (activeParcelId) {
+                loadParcelDetailsAndGeometry(activeParcelId);
+            }
+            showEditButtons(false);
+            showToast('Editing cancelled. Original boundary restored.', 'info');
+        }
+
+        function showEditButtons(showSave) {
+            document.getElementById('btn-save').style.display = showSave ? 'inline-block' : 'none';
+            document.getElementById('btn-cancel').style.display = showSave ? 'inline-block' : 'none';
+        }
+
+        // Save active geometry to DB
+        async function saveActiveGeometryToDb() {
+            if (!canEditGis()) {
+                showToast('Your account does not have permission to save geometry changes.', 'error');
+                return;
+            }
+            if (!activeParcelId) {
+                showToast('No active parcel selected', 'error');
+                return;
+            }
+
+            if (!activeFeatureData) {
+                showToast('No geometry data to save. Draw a polygon first.', 'error');
+                return;
+            }
+
+            const geom = activeFeatureData.geometry || activeFeatureData;
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                showToast('Saving cadastral boundary and running dynamic UTM area validation...', 'info');
+                const result = await api(`/api/gis/parcels/${activeParcelId}/geometry`, {
+                    method: 'POST',
+                    body: {
+                        geometry: geom,
+                        source: 'revenue_officer_survey',
+                        notes: 'Manual cadastral boundary adjustment via GIS Workstation',
+                        source_document_id: sourceDocumentId,
+                        source_page_number: sourceDocumentPage
+                    }
+                });
+
+                showToast(`Boundary saved successfully! Geodesic Area: ${result.calculated_area_acres} ${result.area_unit}`, 'success');
+                showEditButtons(false);
+                isEditingMode = false;
+
+                await loadParcelDetailsAndGeometry(activeParcelId);
+                await loadAllParcelsGisData();
+
+            } catch (err) {
+                console.error('Failed to save boundary:', err);
+                showToast('Failed to save boundary: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Save Geometry';
+            }
+        }
+
+        // Delete active geometry
+        async function deleteActiveGeometry() {
+            if (!canEditGis()) {
+                showToast('Your account does not have permission to delete parcel geometry.', 'error');
+                return;
+            }
+            if (!activeParcelId) return;
+
+            if (!confirm('Are you sure you want to delete this parcel boundary from the database? This action is recorded in the immutable audit trail.')) {
+                return;
+            }
+
+            try {
+                await api(`/api/gis/parcels/${activeParcelId}/geometry`, {
+                    method: 'DELETE'
+                });
+
+                showToast('Parcel geometry deleted from database', 'info');
+                drawnItems.clearLayers();
+                activeFeatureData = null;
+                activeGeometryId = null;
+
+                await loadParcelDetailsAndGeometry(activeParcelId);
+                await loadAllParcelsGisData();
+
+            } catch (err) {
+                console.error('Failed to delete geometry:', err);
+                showToast('Could not delete geometry: ' + err.message, 'error');
+            }
+        }
+
+        function refreshGisMap() {
+            hasInitialMapFit = true;
+            loadParcelsDropdown();
+            loadAllParcelsGisData();
+            if (activeParcelId) {
+                loadParcelDetailsAndGeometry(activeParcelId);
+            }
+            showToast('Cadastral map and geometries synchronized', 'info');
+        }
+
+        function viewInDigitalTwin() {
+            if (activeParcelId) {
+                window.location.href = `parcel.html?id=${activeParcelId}&tab=gis`;
+            }
+        }
+
+        function viewInVerificationQueue() {
+            if (activeParcelId) {
+                window.location.href = `verification.html?parcel_id=${activeParcelId}`;
+            }
+        }
+
+        // Initialize map on window load
+        window.addEventListener('load', async function () {
+            try {
+                const user = await api('/api/auth/me');
+                if (!user) return;
+                Auth.setUser(user);
+                applyGisEditPermissions();
+            } catch (error) {
+                console.error('Could not confirm GIS permissions:', error);
+            }
+            initMap();
+        });
+    </script>
+</body>
+</html>

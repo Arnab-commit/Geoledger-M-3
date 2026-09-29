@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLedger — Parcel Digital Twin & Historical Lineage</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Precision Workstation Left Rail -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-top">
+                    <h1>GeoLedger</h1>
+                    <span class="badge-tag">Cadastral</span>
+                </div>
+                <div class="subtitle">Land Record Command Centre</div>
+                <div class="sidebar-jurisdiction">
+                    <span>STATE REVENUE ADJUDICATION</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Command Workspace</div>
+                <a href="dashboard.html" class="nav-link">
+                    <span>Command Desk</span>
+                    <span class="nav-link-code">CMD</span>
+                </a>
+                <a href="documents.html" class="nav-link">
+                    <span>Document Intake & OCR</span>
+                    <span class="nav-link-code">DOC</span>
+                </a>
+                <a href="comparison.html" class="nav-link">
+                    <span>Dual Deed Reconciliation</span>
+                    <span class="nav-link-code">REC</span>
+                </a>
+                <a href="parcel.html" class="nav-link active">
+                    <span>Parcel Digital Twin</span>
+                    <span class="nav-link-code">PAR</span>
+                </a>
+                <a href="gis.html" class="nav-link">
+                    <span>Cadastral GIS Map</span>
+                    <span class="nav-link-code">GIS</span>
+                </a>
+                <a href="verification.html" class="nav-link">
+                    <span>Adjudication Queue</span>
+                    <span class="nav-link-code">VER</span>
+                </a>
+                <a href="audit.html" class="nav-link">
+                    <span>Immutable Audit Log</span>
+                    <span class="nav-link-code">AUD</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div id="user-info" class="text-sm"></div>
+                <button onclick="Auth.logout()" class="btn btn-sm btn-outline mt-sm" style="width: 100%;">Sign Out Session</button>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title-group">
+                    <div>
+                        <div class="header-title">Parcel Digital Twin Workstation</div>
+                        <div class="header-subtitle">Multi-Decade Entity Resolution, Reconstructed Historical Lineage & Cadastral Dossier</div>
+                    </div>
+                </div>
+
+                <div class="command-search-bar">
+                    <span style="font-size: 0.85rem; color: var(--ink-muted); margin-right: 4px;">🔍</span>
+                    <input type="text" id="global-command-search" placeholder="Search ULPIN, Khasra No, Village, or Deed Hash..." autocomplete="off">
+                    <span class="command-search-badge">INDEX</span>
+                </div>
+
+                <div class="header-actions">
+                    <select id="parcel-selector" class="input" style="width: 270px; padding: 4px 8px; font-size: 0.8rem;" onchange="loadSelectedParcel()">
+                        <option value="">Loading Cadastral Parcels...</option>
+                    </select>
+                    <button onclick="reconcileCurrentParcel()" id="reconcile-btn" class="btn btn-warning btn-sm" style="display: none;">⚡ Reconcile Records</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Signature Central Parcel Identity Header -->
+                <div id="parcel-overview" class="parcel-identity-banner" style="display: none;">
+                    <div class="parcel-header-top">
+                        <div>
+                            <div class="text-xs text-muted font-mono">UNIQUE LAND PARCEL RECORD DOSSIER</div>
+                            <div id="parcel-title" class="parcel-header-ulpin mt-xs">—</div>
+                        </div>
+                        <div class="parcel-header-chips">
+                            <span id="parcel-status-badge" class="badge">—</span>
+                            <span id="parcel-score" class="badge badge-info num-tabular" style="font-size: 0.72rem;">—</span>
+                        </div>
+                    </div>
+
+                    <div class="parcel-meta-grid">
+                        <div>
+                            <div class="parcel-meta-label">PRIMARY CADASTRAL IDENTIFIER</div>
+                            <div class="parcel-meta-val font-mono" id="parcel-ident">—</div>
+                        </div>
+                        <div>
+                            <div class="parcel-meta-label">REVENUE JURISDICTION</div>
+                            <div class="parcel-meta-val" id="parcel-location">—</div>
+                        </div>
+                        <div>
+                            <div class="parcel-meta-label">CURRENT RECORDED TITLE HOLDER</div>
+                            <div class="parcel-meta-val" id="parcel-owner">—</div>
+                        </div>
+                        <div>
+                            <div class="parcel-meta-label">RECORDED GEODETIC AREA</div>
+                            <div class="parcel-meta-val font-mono num-tabular" id="parcel-area">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Structured Information Rails / Tabs -->
+                <div id="parcel-tabs" class="tabs" style="display: none;">
+                    <button class="tab-btn active" id="tab-btn-timeline" onclick="switchParcelTab('timeline')">
+                        📅 Reconstructed Land History
+                    </button>
+                    <button class="tab-btn" id="tab-btn-discrepancies" onclick="switchParcelTab('discrepancies')">
+                        ⚠ Discrepancy & Contradiction Ledger (<span id="discrepancy-count">0</span>)
+                    </button>
+                    <button class="tab-btn" id="tab-btn-ownership" onclick="switchParcelTab('ownership')">
+                        👥 Chain of Title & Fractional Schedule
+                    </button>
+                    <button class="tab-btn" id="tab-btn-documents" onclick="switchParcelTab('documents')">
+                        📄 Evidentiary Deeds & Folios (<span id="document-count">0</span>)
+                    </button>
+                    <button class="tab-btn" id="tab-btn-gis" onclick="switchParcelTab('gis')">
+                        🗺️ Spatial Geometry & Cadastral Vertices
+                    </button>
+                </div>
+
+                <!-- Tab Content: Reconstructed Land History Timeline -->
+                <div id="tab-timeline" class="tab-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span>Reconstructed Land History & Title Mutations</span>
+                                <div class="text-xs text-muted font-mono mt-xs">Chronological deeds, partitions, transfers, and survey updates</div>
+                            </div>
+                            <span id="timeline-status" class="badge">—</span>
+                        </div>
+                        <div id="timeline-container" class="timeline mt-md">
+                            <div class="text-center text-muted p-md">Select a parcel from registry to reconstruct timeline</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Discrepancies & Contradictions -->
+                <div id="tab-discrepancies" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span>Cross-Record Contradiction & Variance Ledger</span>
+                                <div class="text-xs text-muted font-mono mt-xs">Automated legal decision support flagging title and boundary discrepancies</div>
+                            </div>
+                            <span class="badge badge-warning">Adjudication Engine</span>
+                        </div>
+                        <div id="discrepancies-container" class="mt-md">
+                            <div class="text-center text-muted p-md">No discrepancies detected across historical deeds</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Ownership Schedule & Chain of Title -->
+                <div id="tab-ownership" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span>Chain of Title & Recorded Ownership Schedule</span>
+                                <div class="text-xs text-muted font-mono mt-xs">Historical succession, parentage, fractional shares, and tenure accreditation</div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="ownership-table">
+                                <thead>
+                                    <tr>
+                                        <th>Recorded Title Holder</th>
+                                        <th>Normalized English Name</th>
+                                        <th>Parentage / Spouse</th>
+                                        <th>Tenure Fractional Share</th>
+                                        <th>Tenure Status</th>
+                                        <th>OCR Extraction Confidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted p-md">No recorded title entries found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Evidentiary Documents -->
+                <div id="tab-documents" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span>Linked Evidentiary Deeds & Revenue Folios</span>
+                                <div class="text-xs text-muted font-mono mt-xs">Underlying documentary evidence supporting this digital twin</div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="linked-documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>Document Record Name</th>
+                                        <th>Deed Classification</th>
+                                        <th>Ingestion Timestamp</th>
+                                        <th>Processing State</th>
+                                        <th>SHA-256 Non-Repudiation Hash</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted p-md">No linked documents found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Cadastral GIS Data -->
+                <div id="tab-gis" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span>Cadastral Boundary Geometry & Spatial Telemetry</span>
+                                <div class="text-xs text-muted font-mono mt-xs">Pan-India UTM projected polygon, geodesic area and vertex bounds</div>
+                            </div>
+                        </div>
+                        <div id="gis-details" class="mt-md">
+                            <div class="text-center text-muted p-md">No cadastral polygon linked to this parcel</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Initial Empty State -->
+                <div id="empty-state" class="card text-center p-xl" style="background: var(--canvas-surface);">
+                    <div style="font-size: 2.5rem; color: var(--survey-cadastral);">🏛️</div>
+                    <h3 class="serif-heading mt-sm" style="font-size: 1.2rem;">Select a Parcel Digital Twin from Registry</h3>
+                    <p class="text-muted mt-xs" style="max-width: 580px; margin: 0.5rem auto 0; font-size: 0.82rem;">
+                        Inspect the full reconstructed land history, chain of title, contradiction matrix, and spatial boundaries for any registered parcel in the state cadastral index.
+                    </p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        Auth.requireAuth();
+        setupSidebar();
+
+        let currentParcelId = null;
+        let currentTwin = null;
+
+        async function loadParcelsList() {
+            try {
+                const parcels = await api('/api/parcels');
+                const selector = document.getElementById('parcel-selector');
+
+                if (!parcels || parcels.length === 0) {
+                    selector.innerHTML = '<option value="">No parcels found in database</option>';
+                    return;
+                }
+
+                selector.innerHTML = '<option value="">Select a Parcel Digital Twin...</option>' +
+                    parcels.map(p => `
+                        <option value="${p.id}">${p.parcel_code} — ${p.village} (${p.document_count} deeds)</option>
+                    `).join('');
+
+                // Check URL param for parcel ID or tab
+                const urlParams = new URLSearchParams(window.location.search);
+                const paramId = urlParams.get('id');
+                const tabParam = urlParams.get('tab');
+
+                if (paramId && parcels.some(p => p.id === paramId)) {
+                    selector.value = paramId;
+                    await loadSelectedParcel();
+                } else if (parcels.length > 0) {
+                    selector.value = parcels[0].id;
+                    await loadSelectedParcel();
+                }
+
+                if (tabParam) {
+                    switchParcelTab(tabParam);
+                }
+            } catch (error) {
+                console.error('Failed to load parcels:', error);
+                showToast('Failed to load parcels list', 'error');
+            }
+        }
+
+        async function loadSelectedParcel() {
+            const selector = document.getElementById('parcel-selector');
+            const parcelId = selector.value;
+            if (!parcelId) {
+                document.getElementById('parcel-overview').style.display = 'none';
+                document.getElementById('parcel-tabs').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                document.getElementById('reconcile-btn').style.display = 'none';
+                return;
+            }
+
+            currentParcelId = parcelId;
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('parcel-overview').style.display = 'block';
+            document.getElementById('parcel-tabs').style.display = 'flex';
+            document.getElementById('reconcile-btn').style.display = 'inline-block';
+
+            try {
+                const twin = await api(`/api/parcels/${parcelId}`);
+                currentTwin = twin;
+
+                const ident = twin.identity;
+                const primaryId = twin.identifiers && twin.identifiers.length > 0 ?
+                    `${twin.identifiers[0].type.replace('_', ' ').toUpperCase()}: ${twin.identifiers[0].value}` :
+                    'Unindexed Survey Number';
+
+                document.getElementById('parcel-title').textContent = `${ident.parcel_code} — ${primaryId}`;
+                document.getElementById('parcel-status-badge').innerHTML = getStatusBadge(ident.verification_status);
+                document.getElementById('parcel-score').textContent = `Consistency Index: ${(ident.consistency_score * 100).toFixed(0)}%`;
+                document.getElementById('parcel-ident').textContent = primaryId;
+
+                const locParts = [ident.village, ident.district, ident.state].filter(Boolean);
+                document.getElementById('parcel-location').textContent = locParts.length > 0 ? locParts.join(', ') : 'Location unspecified';
+                document.getElementById('parcel-owner').textContent = ident.current_owner || 'Not recorded';
+
+                const areaDisplay = ident.current_area ? `${ident.current_area} ${ident.area_unit || 'acres'}` : 'Area unstated';
+                const classDisplay = ident.land_classification ? ` (${ident.land_classification})` : '';
+                document.getElementById('parcel-area').textContent = `${areaDisplay}${classDisplay}`;
+
+                document.getElementById('discrepancy-count').textContent = twin.discrepancies.length;
+                document.getElementById('document-count').textContent = twin.documents.length;
+
+                renderDiscrepancies(twin.discrepancies);
+                renderDocuments(twin.documents);
+                renderOwnership(twin.ownership);
+                renderGIS(twin.gis);
+                await loadTimeline(parcelId);
+
+            } catch (error) {
+                console.error('Failed to load parcel digital twin:', error);
+                showToast('Failed to load parcel details', 'error');
+            }
+        }
+
+        async function loadTimeline(parcelId) {
+            try {
+                const timeline = await api(`/api/parcels/${parcelId}/timeline`);
+                const container = document.getElementById('timeline-container');
+                const statusBadge = document.getElementById('timeline-status');
+
+                statusBadge.textContent = `Chain of Title: ${timeline.chain_of_title_status}`;
+                statusBadge.className = `badge badge-${timeline.chain_of_title_status === 'CLEAR' ? 'success' : 'warning'}`;
+
+                if (!timeline.events || timeline.events.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted p-md">No chronological timeline events found for this parcel</div>';
+                    return;
+                }
+
+                container.innerHTML = timeline.events.map(event => {
+                    const isAnomaly = ['warning', 'discrepancy', 'anomaly'].includes(event.status);
+                    return `
+                        <div class="timeline-item ${isAnomaly ? 'timeline-item-anomaly' : ''}">
+                            <div class="timeline-badge badge-${isAnomaly ? 'warning' : 'info'} font-mono">${event.year || event.date}</div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <strong class="timeline-event-title">${event.title}</strong>
+                                    ${isAnomaly ? `<span class="badge badge-danger">⚠ ${event.flag}</span>` : '<span class="badge badge-success">Verified Record</span>'}
+                                </div>
+                                <div class="text-xs text-muted mt-xs font-mono">
+                                    Title Holder: <strong style="color: var(--ink-deep);">${event.recorded_owner}</strong> | Area: ${event.area} | Event Type: ${event.event_type}
+                                </div>
+                                <div class="mt-xs text-sm" style="color: var(--ink-secondary); line-height: 1.45;">${event.description}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load timeline:', error);
+            }
+        }
+
+        function renderDiscrepancies(discrepancies) {
+            const container = document.getElementById('discrepancies-container');
+            if (!discrepancies || discrepancies.length === 0) {
+                container.innerHTML = '<div class="alert alert-success">✓ No contradictions detected across historical records. All cross-document fields are consistent.</div>';
+                return;
+            }
+
+            container.innerHTML = discrepancies.map(d => {
+                const isHigh = d.severity === 'critical' || d.severity === 'high';
+                return `
+                    <div class="card mb-md" style="border-left: 4px solid var(--${isHigh ? 'danger' : 'warning'});">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <strong class="serif-heading" style="color: var(--ink-deep); font-size: 0.95rem;">${d.type.replace(/_/g, ' ').toUpperCase()}</strong>
+                                <span class="badge badge-${isHigh ? 'danger' : 'warning'} ml-sm">${d.severity.toUpperCase()} SEVERITY</span>
+                            </div>
+                            <span class="badge badge-${d.status === 'resolved' ? 'success' : 'warning'}">${d.status}</span>
+                        </div>
+                        <div class="grid grid-2 gap-md mt-sm" style="background: var(--canvas-panel); padding: 10px 12px; border-radius: var(--radius-xs); border: 1px solid var(--canvas-border);">
+                            <div>
+                                <span class="text-muted text-xs font-mono">RECORD A (Prior Document):</span>
+                                <div class="font-medium mt-xs font-mono">${d.value_a || '—'}</div>
+                            </div>
+                            <div>
+                                <span class="text-muted text-xs font-mono">RECORD B (Subsequent Document):</span>
+                                <div class="font-medium mt-xs font-mono" style="color: var(--state-conflict);">${d.value_b || '—'}</div>
+                            </div>
+                        </div>
+                        <div class="mt-sm text-sm">
+                            <strong style="color: var(--ink-deep);">Evidentiary Variance:</strong> <span class="text-muted">${d.reason}</span>
+                        </div>
+                        <div class="mt-sm flex justify-between items-center">
+                            <span class="text-xs text-muted">Legal Decision Support: Flagged for Revenue Officer adjudication</span>
+                            <button onclick="createVerificationCase('${d.id}', '${d.type}')" class="btn btn-sm btn-primary">Open in Verification Queue →</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDocuments(docs) {
+            const tbody = document.querySelector('#linked-documents-table tbody');
+            if (!docs || docs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-md">No documents linked to this parcel</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = docs.map(d => `
+                <tr>
+                    <td><a class="record-ident" href="documents.html?document_id=${encodeURIComponent(d.id)}">${d.filename}</a></td>
+                    <td><span class="badge badge-secondary">${(d.document_type || 'deed').toUpperCase()}</span></td>
+                    <td><span class="font-mono text-xs">${d.upload_timestamp ? formatDate(d.upload_timestamp) : '—'}</span></td>
+                    <td>${getStatusBadge(d.processing_status)}</td>
+                    <td><code class="link text-xs tabular-code" onclick="copyToClipboard('${d.file_hash}', 'SHA-256')">${d.file_hash ? d.file_hash.substring(0, 16) + '...' : '—'}</code></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderOwnership(owners) {
+            const tbody = document.querySelector('#ownership-table tbody');
+            if (!owners || owners.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-md">No ownership records found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = owners.map(o => `
+                <tr>
+                    <td><strong style="color: var(--ink-deep);">${o.name}</strong></td>
+                    <td><code class="font-mono">${o.normalized_name}</code></td>
+                    <td>${o.father_husband_name || '—'}</td>
+                    <td><span class="font-mono num-tabular">${(o.share * 100).toFixed(0)}%</span></td>
+                    <td><span class="badge badge-${o.is_current ? 'success' : 'secondary'}">${o.is_current ? 'Current Holder' : 'Predecessor'}</span></td>
+                    <td>${formatConfidence(o.confidence)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderGIS(gisList) {
+            const container = document.getElementById('gis-details');
+            if (!gisList || gisList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted p-md">
+                        <p>No cadastral polygon geometry linked to this parcel yet.</p>
+                        <a href="gis.html" class="btn btn-primary btn-sm mt-sm">Open GIS Map to Link Cadastral Boundary →</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const gis = gisList[0];
+            container.innerHTML = `
+                <div class="grid grid-3 gap-md">
+                    <div>
+                        <div class="text-xs text-muted font-mono">GEOMETRY TYPE</div>
+                        <div class="font-medium mt-xs font-mono">${gis.geometry_type}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-muted font-mono">GEODESIC CALCULATED AREA</div>
+                        <div class="font-medium mt-xs font-mono num-tabular" style="color: var(--survey-cadastral);">${gis.calculated_area} ${gis.area_unit}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-muted font-mono">SPATIAL PROJECTION SOURCE</div>
+                        <div class="font-medium mt-xs">${gis.source}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-muted font-mono">VERIFICATION STATUS</div>
+                        <div class="font-medium mt-xs">${gis.verification_status || 'Pending'}</div>
+                    </div>
+                </div>
+                <div class="mt-md">
+                <a href="gis.html?parcel_id=${encodeURIComponent(currentParcelId)}" class="btn btn-secondary btn-sm">Inspect selected parcel in GIS workstation →</a>
+                </div>
+            `;
+        }
+
+        function switchParcelTab(tabName) {
+            document.querySelectorAll('#parcel-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.style.display = 'none';
+                c.classList.remove('active');
+            });
+
+            const btn = document.getElementById(`tab-btn-${tabName}`);
+            const content = document.getElementById(`tab-${tabName}`);
+            if (btn) btn.classList.add('active');
+            if (content) {
+                content.style.display = 'block';
+                content.classList.add('active');
+            }
+        }
+
+        async function reconcileCurrentParcel() {
+            if (!currentParcelId) return;
+
+            try {
+                showToast('Executing multi-document reconciliation engine...', 'info');
+                const res = await api(`/api/parcels/${currentParcelId}/reconcile`, { method: 'POST' });
+                showToast(`Reconciliation complete! Discrepancies detected: ${res.discrepancies_found}`, 'success');
+                loadSelectedParcel();
+            } catch (error) {
+                console.error('Reconciliation failed:', error);
+                showToast('Reconciliation failed: ' + error.message, 'error');
+            }
+        }
+
+        async function createVerificationCase(discrepancyId, caseType) {
+            try {
+                const res = await api('/api/verification/cases', {
+                    method: 'POST',
+                    body: {
+                        parcel_id: currentParcelId,
+                        discrepancy_id: discrepancyId,
+                        case_type: caseType,
+                        priority: 'high',
+                        summary: `Revenue officer review required for ${caseType}`
+                    }
+                });
+                showToast('Verification case opened! Routing to Human Review Queue...', 'success');
+                setTimeout(() => window.location.href = `verification.html?id=${res.id}`, 650);
+            } catch (error) {
+                console.error('Failed to create case:', error);
+                showToast('Failed to create case: ' + error.message, 'error');
+            }
+        }
+
+        loadParcelsList();
+    </script>
+</body>
+</html>

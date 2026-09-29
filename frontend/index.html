@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — GeoLedger</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+    <!-- Left Zone: Institutional Identity & Subtle Cadastral Geometry -->
+    <section class="auth-brand-side">
+        <!-- Abstract Cadastral Survey Geometry (Subtle Architectural Vectors) -->
+        <svg class="auth-cadastral-bg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="#90A4AE" stroke-width="1" fill="none">
+                <!-- Parcel Survey Polygon Grids -->
+                <polygon points="60,80 280,60 340,240 110,260" fill="rgba(44, 94, 122, 0.08)" stroke="#3886B8" stroke-width="1.5" />
+                <polygon points="280,60 520,40 580,210 340,240" fill="rgba(255, 255, 255, 0.03)" />
+                <polygon points="520,40 740,70 710,260 580,210" fill="rgba(44, 94, 122, 0.05)" />
+                <polygon points="110,260 340,240 310,480 80,450" fill="rgba(255, 255, 255, 0.02)" />
+                <polygon points="340,240 580,210 620,470 310,480" fill="rgba(44, 94, 122, 0.09)" stroke="#3886B8" stroke-width="1.5" />
+                <polygon points="580,210 710,260 760,490 620,470" fill="rgba(255, 255, 255, 0.02)" />
+                <polygon points="80,450 310,480 270,720 50,680" fill="rgba(44, 94, 122, 0.06)" />
+                <polygon points="310,480 620,470 580,740 270,720" fill="rgba(255, 255, 255, 0.04)" />
+                <polygon points="620,470 760,490 730,730 580,740" fill="rgba(44, 94, 122, 0.07)" />
+                <!-- Boundary Markers & Ties -->
+                <line x1="340" y1="240" x2="310" y2="480" stroke="#546E7A" stroke-dasharray="4,4" />
+                <line x1="280" y1="60" x2="340" y2="240" stroke="#546E7A" stroke-dasharray="4,4" />
+                <circle cx="340" cy="240" r="3" fill="#3886B8" />
+                <circle cx="310" cy="480" r="3" fill="#3886B8" />
+                <circle cx="580" cy="210" r="3" fill="#3886B8" />
+                <circle cx="620" cy="470" r="3" fill="#3886B8" />
+            </g>
+        </svg>
+
+        <div class="auth-brand-top">
+            <div class="auth-brand-mark">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="2" y="2" width="24" height="24" rx="3" stroke="#3886B8" stroke-width="2" fill="rgba(29, 75, 102, 0.25)" />
+                    <path d="M7 14L12 9L21 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="12" cy="9" r="2" fill="#FFFFFF" />
+                    <circle cx="21" cy="18" r="2" fill="#3886B8" />
+                </svg>
+                <span class="auth-brand-logo">GeoLedger</span>
+                <span class="auth-brand-tag">Workspace</span>
+            </div>
+        </div>
+
+        <div class="auth-brand-main">
+            <h1 class="auth-hero-title">Intelligent Land Record &amp; Parcel Validation</h1>
+            <p class="auth-hero-desc">
+                A unified workspace for title lineage reconstruction, cadastral deed reconciliation, and multi-era boundary verification.
+            </p>
+            <div class="auth-features-list">
+                <div class="auth-feature-item">
+                    <span class="auth-feature-bullet"></span>
+                    <span>Evidence-backed title reconciliation across historical deeds and registries</span>
+                </div>
+                <div class="auth-feature-item">
+                    <span class="auth-feature-bullet"></span>
+                    <span>Chronological land parcel mutation and chain-of-title tracking</span>
+                </div>
+                <div class="auth-feature-item">
+                    <span class="auth-feature-bullet"></span>
+                    <span>Geodesic boundary validation and spatial discrepancy detection</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-brand-footer">
+            <p>GeoLedger Land Administration Platform &bull; Secure Enterprise Environment</p>
+        </div>
+    </section>
+
+    <!-- Right Zone: Clean Authentication Form Panel -->
+    <main class="auth-form-side">
+        <div class="auth-form-container">
+            <header class="auth-form-header">
+                <h2 class="auth-form-title">Sign in to your account</h2>
+                <p class="auth-form-subtitle">Enter your registered credentials to access the workspace.</p>
+            </header>
+
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="username" class="label">Email or User ID</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="input" 
+                        placeholder="e.g. name@agency.gov or username" 
+                        required 
+                        autocomplete="username" 
+                        spellcheck="false"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <label for="password" class="label" style="margin-bottom: 0;">Password</label>
+                        <a href="#" onclick="openForgotPasswordModal(event)" class="link text-xs" id="forgot-password-link">Forgot password?</a>
+                    </div>
+                    <div class="password-input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="input" 
+                            placeholder="Enter your password" 
+                            required 
+                            autocomplete="current-password"
+                        >
+                        <button 
+                            type="button" 
+                            id="password-toggle" 
+                            class="password-toggle-btn" 
+                            onclick="togglePasswordVisibility()" 
+                            aria-label="Show password"
+                            title="Show password"
+                        >
+                            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Notice Container -->
+                <div id="login-error-alert" class="alert alert-danger" style="display: none; font-size: 0.8rem; margin-bottom: 1rem;" role="alert"></div>
+
+                <button type="submit" id="login-btn" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <span id="login-btn-text">Sign in</span>
+                </button>
+            </form>
+
+            <div id="signup-panel" hidden>
+                <form id="signup-form" novalidate>
+                    <div class="form-group">
+                        <label for="signup-name" class="label">Full name</label>
+                        <input id="signup-name" class="input" autocomplete="name" maxlength="255" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-username" class="label">Username</label>
+                        <input id="signup-username" class="input" autocomplete="username" minlength="3" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email" class="label">Email</label>
+                        <input id="signup-email" class="input" type="email" autocomplete="email" maxlength="255" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password" class="label">Password</label>
+                        <div class="password-input-wrapper">
+                            <input id="signup-password" class="input" type="password" autocomplete="new-password" minlength="8" maxlength="256" required>
+                            <button type="button" class="password-toggle-btn" data-password-target="signup-password" aria-label="Show password" title="Show password">Show</button>
+                        </div>
+                        <small class="text-muted">Use at least 8 characters.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm-password" class="label">Confirm password</label>
+                        <input id="signup-confirm-password" class="input" type="password" autocomplete="new-password" minlength="8" maxlength="256" required>
+                    </div>
+                    <div id="signup-error-alert" class="alert alert-danger" style="display:none; font-size:.8rem; margin-bottom:1rem" role="alert"></div>
+                    <button type="submit" id="signup-btn" class="btn btn-primary btn-lg" style="width:100%">Create account</button>
+                </form>
+            </div>
+
+            <p class="text-center text-sm mt-md">
+                <span id="auth-switch-prompt">New to GeoLedger?</span>
+                <button type="button" id="auth-switch" class="link" style="background:none;border:0;padding:0;font:inherit">Create an account</button>
+            </p>
+
+            <footer class="auth-security-notice">
+                <p>Protected by enterprise session management and cryptographic audit logging.</p>
+            </footer>
+        </div>
+    </main>
+
+    <!-- Forgot Password Assistance Modal -->
+    <div id="forgot-password-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3 id="forgot-modal-title" style="font-size: 1rem;">Credential Recovery</h3>
+                <button type="button" onclick="closeForgotPasswordModal()" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" style="font-size: 0.85rem; line-height: 1.55; color: var(--ink-secondary);">
+                <p style="margin-bottom: 0.85rem;">
+                    For security reasons and title record integrity, automated password self-service is governed by agency directory policies.
+                </p>
+                <div class="record-panel mb-sm" style="background: var(--canvas-subtle); padding: 10px 12px; border-radius: var(--radius-xs);">
+                    <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 2px;">Next Step</div>
+                    <div style="font-weight: 500; color: var(--ink-deep);">Contact your department records supervisor or system administrator to request a credential reset or temporary security token.</div>
+                </div>
+                <p class="text-xs text-muted">
+                    If you are an administrator requiring emergency access, refer to the system deployment recovery documentation.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeForgotPasswordModal()" class="btn btn-secondary btn-sm">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Redirect only after validating the stored session with the backend.
+        if (Auth.isAuthenticated()) {
+            fetch('/api/auth/me', { headers: { Authorization: `Bearer ${Auth.getToken()}` } })
+                .then(response => response.ok ? response.json() : null)
+                .then(user => {
+                    if (!user) { Auth.logout(); return; }
+                    Auth.setUser(user);
+                    window.location.replace(landingPageForRole(user.role));
+                })
+                .catch(() => {});
+        }
+
+        const loginForm = document.getElementById('login-form');
+        const signupPanel = document.getElementById('signup-panel');
+        const authSwitch = document.getElementById('auth-switch');
+        const authTitle = document.querySelector('.auth-form-title');
+        const authSubtitle = document.querySelector('.auth-form-subtitle');
+        const authSwitchPrompt = document.getElementById('auth-switch-prompt');
+        let showingSignup = false;
+        authSwitch.addEventListener('click', () => {
+            showingSignup = !showingSignup;
+            loginForm.hidden = showingSignup;
+            signupPanel.hidden = !showingSignup;
+            authTitle.textContent = showingSignup ? 'Create your account' : 'Sign in to your account';
+            authSubtitle.textContent = showingSignup ? 'Create a personal account to use GeoLedger.' : 'Enter your registered credentials to access the workspace.';
+            authSwitchPrompt.textContent = showingSignup ? 'Already have an account?' : 'New to GeoLedger?';
+            authSwitch.textContent = showingSignup ? 'Sign in' : 'Create an account';
+            document.title = showingSignup ? 'Create Account — GeoLedger' : 'Sign In — GeoLedger';
+        });
+
+        function landingPageForRole(role) {
+            const normalized = String(role || '').toLowerCase();
+            if (normalized === 'revenue_officer' || normalized === 'verifier') return 'verification.html';
+            if (normalized === 'auditor') return 'audit.html';
+            if (normalized === 'citizen' || normalized === 'viewer') return 'documents.html';
+            return 'dashboard.html';
+        }
+
+        async function establishSession(identifier, password) {
+            const loginResponse = await fetch('/api/auth/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: identifier, password })
+            });
+            const loginData = await loginResponse.json().catch(() => ({}));
+            if (!loginResponse.ok) throw new Error(loginData.detail || 'Unable to sign in. Check your email or username and password.');
+            Auth.setToken(loginData.access_token);
+
+            const meResponse = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${loginData.access_token}` } });
+            if (!meResponse.ok) {
+                Auth.logout();
+                throw new Error('Your account could not be verified. Please sign in again.');
+            }
+            const user = await meResponse.json();
+            Auth.setUser(user);
+            return user;
+        }
+
+        document.querySelectorAll('[data-password-target]').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const input = document.getElementById(toggle.dataset.passwordTarget);
+                const reveal = input.type === 'password';
+                input.type = reveal ? 'text' : 'password';
+                toggle.textContent = reveal ? 'Hide' : 'Show';
+                toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+            });
+        });
+
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('password');
+            const toggleBtn = document.getElementById('password-toggle');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                toggleBtn.setAttribute('aria-label', 'Hide password');
+                toggleBtn.title = 'Hide password';
+                // Eye slash icon
+                eyeIcon.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+            } else {
+                pwdInput.type = 'password';
+                toggleBtn.setAttribute('aria-label', 'Show password');
+                toggleBtn.title = 'Show password';
+                // Regular eye icon
+                eyeIcon.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            }
+        }
+
+        // Forgot password modal controls
+        function openForgotPasswordModal(e) {
+            if (e) e.preventDefault();
+            const modal = document.getElementById('forgot-password-modal');
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+        }
+
+        function closeForgotPasswordModal() {
+            const modal = document.getElementById('forgot-password-modal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
+
+        // Close modal on escape key or backdrop click
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeForgotPasswordModal();
+        });
+
+        document.getElementById('forgot-password-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'forgot-password-modal') closeForgotPasswordModal();
+        });
+
+        // Form submission handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const errorAlert = document.getElementById('login-error-alert');
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('login-btn-text');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            // Clear previous error
+            errorAlert.style.display = 'none';
+            errorAlert.textContent = '';
+
+            if (!username || !password) {
+                errorAlert.textContent = 'Please enter both your email/user ID and password.';
+                errorAlert.style.display = 'block';
+                return;
+            }
+
+            // Set loading state
+            btn.disabled = true;
+            btnText.textContent = 'Signing in...';
+
+            try {
+                const user = await establishSession(username, password);
+                btnText.textContent = 'Signed in. Loading workspace...';
+                window.location.replace(landingPageForRole(user.role));
+            } catch (err) {
+                errorAlert.textContent = err.message || 'Unable to sign in. Please check your credentials and try again.';
+                errorAlert.style.display = 'block';
+                btn.disabled = false;
+                btnText.textContent = 'Sign in';
+            }
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const error = document.getElementById('signup-error-alert');
+            const button = document.getElementById('signup-btn');
+            const full_name = document.getElementById('signup-name').value.trim();
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmation = document.getElementById('signup-confirm-password').value;
+            error.style.display = 'none';
+            error.textContent = '';
+            if (!form.reportValidity()) return;
+            if (password !== confirmation) {
+                error.textContent = 'The passwords do not match.';
+                error.style.display = 'block';
+                return;
+            }
+            button.disabled = true;
+            button.textContent = 'Creating account...';
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name, username, email, password })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const detail = Array.isArray(result.detail) ? result.detail.map(item => item.msg).join(' ') : result.detail;
+                    throw new Error(detail || 'Could not create the account. Please review your details.');
+                }
+                const user = await establishSession(username, password);
+                Auth.setUser(user);
+                window.location.replace(landingPageForRole(user.role));
+            } catch (err) {
+                error.textContent = err.message || 'Could not create the account. Please try again.';
+                error.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Create account';
+            }
+        });
+    </script>
+</body>
+</html>
