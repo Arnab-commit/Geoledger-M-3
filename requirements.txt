@@ -15,6 +15,11 @@ python-multipart==0.0.20
 
 # Image processing
 Pillow==11.2.1
+opencv-python-headless==5.0.0.93
+
+# PDF processing and projected GIS calculations
+PyMuPDF==1.28.2
+pyproj==3.8.0
 
 # OCR wrapper (requires a system Tesseract executable and trained language data)
 pytesseract==0.3.13

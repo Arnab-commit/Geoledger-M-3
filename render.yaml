@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: geoledger
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SEED_DEMO_DATA
+        value: "false"
+      - key: DEBUG
+        value: "false"
+      - key: DB_POOL_SIZE
+        value: "3"
+      - key: DB_MAX_OVERFLOW
+        value: "0"
+      - key: OCR_PROVIDER
+        value: tesseract
+      - key: TESSERACT_PATH
+        value: /usr/bin/tesseract
